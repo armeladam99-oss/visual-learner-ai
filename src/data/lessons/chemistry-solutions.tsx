@@ -389,12 +389,11 @@ export function getChemistrySolutionsSections(): LessonSection[] {
       icon: "✏️",
       content: (
         <DrawMePanel
+          subject="chemistry"
           options={[
-            { label: "Courbe de dosage", icon: "⚗️", description: "pH en fonction du volume" },
-            { label: "Schéma de dilution", icon: "💧", description: "Visualise la dilution" },
-            { label: "Suivi temporel", icon: "📈", description: "Évolution des concentrations" },
+            { label: "Courbe de dosage", icon: "⚗️", description: "pH en fonction du volume", variant: "dosage" },
+            { label: "Courbe de dilution", icon: "💧", description: "Concentration vs volume", variant: "dilution" },
           ]}
-          onDraw={() => {}}
         />
       ),
     },

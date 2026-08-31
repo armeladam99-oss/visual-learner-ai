@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Clock, ChevronRight, GraduationCap, BookOpen } from "lucide-react";
 import { chapters, subjectLabels, subjectColors } from "@/data/chapters";
+import { getLessonSections } from "@/data/lessons";
 import { useState } from "react";
 
 const subjects = [
@@ -171,7 +172,7 @@ export default function Dashboard() {
               value: new Set(chapters.map((c) => c.subject)).size,
               icon: GraduationCap,
             },
-            { label: "Sections", value: "54", icon: BookOpen },
+            { label: "Sections", value: chapters.reduce((acc, c) => acc + getLessonSections(c.id).length, 0), icon: BookOpen },
           ].map((stat, i) => (
             <div
               key={i}

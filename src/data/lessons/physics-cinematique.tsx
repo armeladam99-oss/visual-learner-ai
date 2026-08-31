@@ -488,12 +488,11 @@ export function getPhysicsCinematiqueSections(): LessonSection[] {
       icon: "✏️",
       content: (
         <DrawMePanel
+          subject="physics"
           options={[
-            { label: "Courbe x(t) d'un MUV", icon: "📈", description: "Représente le mouvement" },
-            { label: "Vitesse en fonction du temps", icon: "🚀", description: "Montre l'évolution de v(t)" },
-            { label: "Comparaison MRU / MUV", icon: "📊", description: "Superpose les deux mouvements" },
+            { label: "Comparaison MRU / MUV (x)", icon: "📈", description: "Superpose x(t) des deux mouvements", variant: "mruvs-muv" },
+            { label: "Comparaison MRU / MUV (v)", icon: "🚀", description: "Montre v(t) côte à côte", variant: "mruvs-muv-v" },
           ]}
-          onDraw={() => {}}
         />
       ),
     },

@@ -681,29 +681,33 @@ export function getMathQuadraticSections(): LessonSection[] {
       icon: "✏️",
       content: (
         <DrawMePanel
+          subject="math"
           options={[
             {
               label: "Courbe de f(x) = ax² + bx + c",
               icon: "📈",
               description: "Trace la parabole correspondante",
+              variant: "parabole",
             },
             {
               label: "Évolution de la pente",
               icon: "📐",
               description: "Montre comment la dérivée varie",
+              variant: "pente",
             },
             {
               label: "Géométrie du discriminant",
               icon: "🔢",
               description: "Visualise le lien entre Δ et les racines",
+              variant: "discriminant",
             },
             {
               label: "Comparaison de paraboles",
               icon: "📊",
               description: "Superpose plusieurs courbes",
+              variant: "comparaison",
             },
           ]}
-          onDraw={() => {}}
         />
       ),
     },

@@ -11,6 +11,8 @@ import { ArrowLeft, ChevronRight, Clock, BookOpen } from "lucide-react";
 import { chapters, subjectLabels, subjectColors } from "@/data/chapters";
 import { getLessonSections } from "@/data/lessons";
 import { LessonSectionWrapper } from "@/components/visual/LessonSectionWrapper";
+import { ProgressBar } from "@/components/visual/ProgressBar";
+import { ScrollToTop } from "@/components/visual/ScrollToTop";
 
 export default function Lesson() {
   const { chapterId } = useParams<{ chapterId: string }>();
@@ -70,6 +72,9 @@ export default function Lesson() {
 
   return (
     <main className="min-h-screen bg-background">
+      <ProgressBar />
+      <ScrollToTop />
+
       {/* Top bar */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-8">
