@@ -114,7 +114,7 @@ export const chapters: ChapterMeta[] = [
     icon: "☢️",
     color: "from-yellow-500 to-amber-600",
     estimatedTime: "35 min",
-    difficulty": "avancé",
+    difficulty: "avancé",
   },
 ];
 

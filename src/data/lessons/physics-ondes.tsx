@@ -176,7 +176,7 @@ export function getPhysicsOndesSections(): LessonSection[] {
             </div>
           </div>
 
-          <ConceptCard icon="📐" title="Relation fondamentale" variant="highlighted">
+          <ConceptCard icon="📐" title="Relation fondamentale" variant="tip">
             <p className="text-center text-base font-mono font-bold text-primary py-2">
               V = λ × f &nbsp;&nbsp;ou&nbsp;&nbsp; V = λ / T
             </p>

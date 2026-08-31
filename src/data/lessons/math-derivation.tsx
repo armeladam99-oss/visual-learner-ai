@@ -82,7 +82,7 @@ export function getMathDerivationSections(): LessonSection[] {
     { id: "graph-explanation", type: "graph-explanation", title: "Interprétation", icon: "🔎", content: (
       <div className="space-y-3 text-sm text-muted-foreground">
         <ConceptCard icon="🔍" title="Signe de f'" variant="info">
-          <p>f'(x₀) > 0 : tangente monte → f croissante en x₀<br/>f'(x₀) < 0 : tangente descend → f décroissante<br/>f'(x₀) = 0 : tangente horizontale → extremum</p>
+          <p>f'(x₀) &gt; 0 : tangente monte → f croissante en x₀<br/>f'(x₀) &lt; 0 : tangente descend → f décroissante<br/>f'(x₀) = 0 : tangente horizontale → extremum</p>
         </ConceptCard>
       </div>
     )},
@@ -145,7 +145,7 @@ export function getMathDerivationSections(): LessonSection[] {
         { question: "Si f'(x₀) > 0, alors en x₀, f est :", options: ["Décroissante", "Croissante", "Constante", "Non définie"], correctIndex: 1, explanation: "f'(x₀) > 0 signifie que la pente est positive → f est croissante." },
       ]} />
     )},
-    { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• f'(x) = pente de la tangente = taux d'accroissement</li><li>• f' > 0 → croissante, f' < 0 → décroissante, f' = 0 → extremum</li><li>• Tableau de signe de f' → tableau de variations de f</li><li>• Les dérivées usuelles sont essentielles à connaître</li></ul></CardContent></Card> },
+    { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• f'(x) = pente de la tangente = taux d'accroissement</li><li>• f' &gt; 0 → croissante, f' &lt; 0 → décroissante, f' = 0 → extremum</li><li>• Tableau de signe de f' → tableau de variations de f</li><li>• Les dérivées usuelles sont essentielles à connaître</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: (
       <div className="space-y-3">
         {[{ topic: "Suites numériques", description: "Limites de suites et récurrence.", icon: "🔢" }, { topic: "Fonctions exponentielles", description: "L'exponentielle est sa propre dérivée.", icon: "𝑒" }, { topic: "Primitives et calcul intégral", description: "L'intégrale est l'opération inverse de la dérivée.", icon: "∫" }].map((item, i) => (
