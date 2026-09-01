@@ -461,6 +461,7 @@ export default function LaboPage() {
       ...prev,
       conversationHistory: [...prev.conversationHistory, userMsg, assistantMsg],
       learningMode: learningMode,
+      currentMode: result.mode,
     }));
 
     if (result.experiment) setActiveExperiment(result.experiment);
@@ -505,6 +506,15 @@ export default function LaboPage() {
             <FlaskConical className="size-5 text-cyan-400" />
             <span className="text-base font-bold text-white">🧪 Labo IA</span>
             <Badge variant="secondary" className="text-[10px] bg-cyan-500/10 text-cyan-400">2e BAC</Badge>
+            {messages.length > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-slate-700 text-slate-400">
+                {ctx.currentMode === "general" && "💬 Discussion"}
+                {ctx.currentMode === "education" && "🎓 Éducation"}
+                {ctx.currentMode === "lab" && "🧪 Laboratoire"}
+                {ctx.currentMode === "image" && "📷 Image"}
+                {ctx.currentMode === "exercise" && "🧮 Exercice"}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setLearningMode("explain")} className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${learningMode === "explain" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "bg-slate-800 text-slate-500"}`}>
