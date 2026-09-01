@@ -75,7 +75,7 @@ const knowledgeBase: Record<string, {
   },
   derivation: {
     keywords: ["dérivée", "derivée", "dérivation", "pente", "tangente", "variation", "extremum"],
-    response: `**La dérivée** d'une fonction en un point est la pente de la tangente.\n\n**Définition :**\nf'(x₀) = lim(h→0) [f(x₀+h) − f(x₀)] / h\n\n**Interprétion :**\n• f'(x) > 0 → croissante\n• f'(x) < 0 → décroissante\n• f'(x) = 0 → extremum\n\n**Formules essentielles :**\n• (xⁿ)' = n·xⁿ⁻¹\n• (eˣ)' = eˣ\n• (ln x)' = 1/x\n• (sin x)' = cos x\n• (u×v)' = u'×v + u×v'`,
+    response: `**La dérivée** d'une fonction en un point est la pente de la tangente.\n\n**Définition :**\nf'(x₀) = lim(h→0) [f(x₀+h) − f(x₀)] / h\n\n**Interprétation :**\n• f'(x) > 0 → croissante\n• f'(x) < 0 → décroissante\n• f'(x) = 0 → extremum\n\n**Formules essentielles :**\n• (xⁿ)' = n·xⁿ⁻¹\n• (eˣ)' = eˣ\n• (ln x)' = 1/x\n• (sin x)' = cos x\n• (u×v)' = u'×v + u×v'`,
     experiment: "fonction",
     suggestions: ["Montre-moi une parabole avec sa dérivée", "Résous un exercice"],
   },
@@ -120,18 +120,81 @@ const knowledgeBase: Record<string, {
 // ═══════════════════════════════════════════════════════════════
 
 const generalTopics = [
-  { keywords: ["salut", "bonjour", "bonsoir", "coucou", "hey", "hello", "ça va", "ca va", "comment ça va", "comment vas-tu", "ça roule"], response: `Salut ! 😊 Comment ça va ?\n\nJe suis ton assistant scientifique, mais je suis aussi là pour discuter de tout ce que tu veux. Tu veux qu'on parle de quelque chose en particulier ?` },
-  { keywords: ["minecraft", "jeux", "jeu", "gaming", "playstation", "xbox", "nintendo", "fortnite", "valorant", "lol", "league of legends", "fifa", "rocket league"], response: `Minecraft ! 🎮 Un classique !\n\nLe jeu de construction et de survie par Mojang. Tu peux construire des maisons, explorer des cavernes, affronter des monstres...\n\nEt savais-tu que Minecraft utilise des algorithmes de **génération procédurale** pour créer les mondes ? C'est un peu comme des maths appliquées au divertissement ! 🧮\n\nTu veux qu'on parle d'autre chose, ou tu as une question de cours ?` },
+  { keywords: ["salut", "bonjour", "bonsoir", "coucou", "hey", "hello", "ça va", "ca va", "comment ça va", "comment vas-tu", "ça roule", "wesh", "yo"], response: `Salut ! 😊 Comment ça va ?\n\nJe suis ton assistant, et je suis aussi là pour discuter de tout ce que tu veux. Tu veux qu'on parle de quelque chose en particulier ?` },
+  { keywords: ["minecraft", "jeux", "jeu", "gaming", "playstation", "xbox", "nintendo", "fortnite", "valorant", "lol", "league of legends", "fifa", "rocket league"], response: `Minecraft ! 🎮 Un classique !\n\nLe jeu de construction et de survie par Mojang. Tu peux construire des maisons, explorer des cavernes, affronter des monstres...\n\nEt savais-tu que Minecraft utilise des algorithmes de **génération procédurale** pour créer les mondes ? C'est un peu comme des maths appliquées au divertissement ! 🧮\n\nTu veux qu'on parle d'autre chose, ou tu as une question ?` },
   { keywords: ["musique", "chanson", "concert", "spotify", "rap", "pop", "rock", "drill", "afro", "melanie", "booba", "damso", "navy", "gazo"], response: `La musique, c'est super ! 🎵\n\nTu écoutes quoi en ce moment ? Moi je trouve ça fascinant comment les ondes sonores créent de la musique — c'est de la physique pure ! Les fréquences, les harmoniques, le rythme...\n\nSi tu veux, je peux t'expliquer la physique du son, ou on peut juste discuter de musique. Comme tu veux ! 😊` },
   { keywords: ["film", "films", "série", "séries", "netflix", "disney", "anime", "naruto", "one piece", "jujutsu", "demon slayer"], response: `Ah les séries et films ! 🎬\n\nTu regardes quoi en ce moment ? Les animes c'est pas mal aussi — il y a beaucoup de science dedans si tu y prêtes attention !\n\nTu veux continuer à discuter ou tu as un cours à réviser ?` },
   { keywords: ["sport", "football", "basketball", "basket", "f1", "formula 1", "mma", "boxe", "tennis", "atletico", "real madrid", "barcelona", "psg", "inter", "juventus"], response: `Le sport ! ⚽🏀\n\nC'est un domaine où la physique est très présente — les trajectoires, la vitesse, l'énergie cinétique...\n\nTu suis quel sport ? Et si tu veux, je peux t'expliquer la physique derrière un tir au but, un dunk, ou un virage en F1 ! 😊` },
-  { keywords: ["techno", "technologie", "tech", "iphone", "samsung", "ai", "intelligence artificielle", "robot", "spacex", "tesla", "google"], response: `La technologie, c'est passionnant ! 🚀\n\nTu t'intéresses à quoi ? L'IA, la space, les phones, les voitures électriques ?\n\nC'est marrant parce que derrière toute la tech, il y a des maths et de la physique — des circuits, des algorithmes, des ondes électromagnétiques...\n\nTu veux qu'on parle tech ou tu as un cours ?` },
+  { keywords: ["techno", "technologie", "tech", "iphone", "samsung", "ai", "intelligence artificielle", "robot", "spacex", "tesla", "google"], response: `La technologie, c'est passionnant ! 🚀\n\nTu t'intéresses à quoi ? L'IA, la space, les phones, les voitures électriques ?\n\nC'est marrant parce que derrière toute la tech, il y a des maths et de la physique — des circuits, des algorithmes, des ondes électromagnétiques...\n\nTu veux qu'on parle tech ou tu as une question ?` },
   { keywords: ["voyage", "voyager", "pays", "maroc", "france", "dubai", "japon", "travel"], response: `Les voyages, c'est génial ! ✈️🌍\n\nTu veux aller où ? Le Maroc a des trucs incroyables — l'Atlas, le Sahara, les riads de Fès...\n\nEt savais-tu que la navigation utilise des calculs mathématiques complexes ? Les coordonnées GPS, les fuseaux horaires...\n\nOn continue à discuter ou tu veux réviser ?` },
   { keywords: ["humour", "blague", "drôle", "rire", "meme", "mème"], response: `Tu veux une blague ? 😄\n\nPourquoi les maths sont tristes ?\nParce qu'elles ont trop de problèmes ! 😂\n\nBon, sur ce, tu veux qu'on passe à un sujet plus sérieux ou on continue à rigoler ?` },
   { keywords: ["merci", "thanks", "super", "génial", "bravo", "parfait", "excellent"], response: `Merci à toi ! 😊\n\nN'hésite pas si tu as d'autres questions, que ce soit de cours ou autre chose. Je suis là ! 💪` },
-  { keywords: ["qui es-tu", "qui es tu", "t'es qui", "tu es qui", "présentation", "présente-toi", "c'est quoi ton nom", "comment tu t'appelles", "ton nom"], response: `Je suis ton **assistant scientifique IA** ! 🧪\n\nMon rôle est de t'aider dans tes révisions, t'expliquer les cours, te montrer des expériences, et répondre à tes questions — que ce soit scolaires ou non !\n\nJe connais les cours de 2e BAC marocain en maths, physique et chimie. Mais je peux aussi discuter de musique, de jeux, de films... de tout ce que tu veux ! 😊` },
+  { keywords: ["ok", "d'accord", "d'acc", "ok merci", "c'est bon", "compris", "c'est clair", "noté", "je note", "oui", "ouais"], response: `Parfait ! 😊\n\nN'hésite pas si tu as besoin de quoi que ce soit — cours, exercice, ou juste discuter. Je suis là ! 💪` },
+  { keywords: ["non", "nan", "non merci", "c'est tout", "rien", "pas maintenant"], response: `Pas de souci ! 😊\n\nJe reste là si tu changes d'avis. On peut discuter de tout, pas juste de cours ! 💬` },
+  { keywords: ["qui es-tu", "qui es tu", "t'es qui", "tu es qui", "présentation", "présente-toi", "c'est quoi ton nom", "comment tu t'appelles", "ton nom"], response: `Je suis ton **assistant IA** ! 🧪\n\nMon rôle est de t'aider dans tes révisions, t'expliquer les cours, te montrer des expériences, et répondre à tes questions — que ce soit scolaires ou non !\n\nJe connais les cours de 2e BAC marocain en maths, physique et chimie. Mais je peux aussi discuter de musique, de jeux, de films... de tout ce que tu veux ! 😊` },
   { keywords: ["âge", "age", "t'es vieux", "t'es jeune", "tu es un humain", "t'es un robot", "es-tu un robot", "t'es une ia", "t'es une intelligence", "tu es une ia", "es tu humain", "tu es humain"], response: `Je suis une intelligence artificielle ! 🤖\n\nJe ne suis pas humain, mais je suis là pour t'aider du mieux possible. Je peux te parler de n'importe quoi — cours, sport, musique, technologie...\n\nEt si tu as besoin d'aide pour réviser, je suis ton meilleur allié ! 💪` },
   { keywords: ["dormir", "fatigué", "fatigue", "coupé", "las", "lassée", "je suis crevé", "fatigant", "ennuyeux", "ennui", "chiant", "saoule", "saoul", "marre", "lourd"], response: `Je comprends, ça arrive d'être fatigué ou ennuyé ! 😅\n\nTu veux qu'on fasse quelque chose de plus interactif ? Je peux te monter une simulation dans le labo, ou on peut discuter de quelque chose qui t'intéresse vraiment.\n\nSinon, prends une pause — réviser c'est important mais le repos aussi ! 💤` },
+  { keywords: ["j'ai faim", "manger", "nourriture", "repas", "faim", "pizza", "couscous", "tajine", "kefta"], response: `La faim, c'est un sérieux sujet ! 🍕😋\n\nTu veux manger quoi ? Le Maroc a des plats incroyables — le couscous, le tajine, les brochettes...\n\nBon, je ne peux pas te cuisiner, mais je peux te distraire pendant que tu attends ! Tu veux qu'on discute ou tu veux réviser pendant que ça cuit ? 😄` },
+  { keywords: ["ami", "amis", "copain", "copine", "pote", "meilleur ami", "relation", "amour", "amoureuse", "arseille", "crush"], response: `Les relations, c'est un sujet important ! 😊\n\nC'est bien d'avoir des amis et des gens autour de soi. Les amitiés du lycée sont souvent celles qu'on retient le plus !\n\nTu veux en parler, ou tu préfères qu'on fasse autre chose ? 💬` },
+  { keywords: ["bref", "bon", "bon sang", "quoi d'autre", "sinon", "et toi", "parle moi", "discute", "raconte"], response: `Allez, on discute ! 😊\n\nDis-moi, qu'est-ce qui te passe par la tête ? On peut parler de n'importe quoi — ton jour, la vie, des projets, des trucs rigolos... 🎯` },
+  { keywords: ["pourquoi", "comment", "quest-ce que", "c'est quoi", "ça veut dire", "définition"], response: `Bonne question ! 🤔\n\nDis-moi exactement de quoi tu parles, et je t'explique clairement. Tu peux me poser des questions sur n'importe quoi — cours ou pas cours !` },
+  { keywords: ["non merci", "pas envie", "j'en ai marre", "laisse tomber", "oublie", "stop", "arrête"], response: `Pas de souci, j'arrête ! 😊\n\nTu me diras quand tu voudras reprendre. Je suis toujours là. 💬` },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 💬 RÉPONSES CONVERSATIONNELLES COURTES (messages sans contexte éducatif)
+// ═══════════════════════════════════════════════════════════════
+
+const shortResponses: { patterns: RegExp[]; responses: string[] }[] = [
+  {
+    patterns: [/^(ah|ah ok|ah ouais|ah oui|oh|oho|waw|wow|waouh|pff|ptdr|mdr|haha|lol|gg|bg|taupe|nul|nulle|sympa|cool|magnifique|incroyable|dingue|ouf|folie)$/i],
+    responses: [
+      "Haha 😄 On continue sur la lancée ou tu veux autre chose ?",
+      "Ah ouais ? 😊 Dis-moi plus, je suis curieux !",
+      "😅 En tout cas je suis là si tu as besoin de quoi que ce soit.",
+      "😄 Toujours là pour toi ! Tu veux qu'on fasse quoi ?",
+    ],
+  },
+  {
+    patterns: [/^(attends|att|patiente|hold on|wait|sec)$/i],
+    responses: [
+      "Je suis là, prends ton temps ! 👍",
+      "Pas de rush, je t'attends. 😊",
+      "Prends le temps qu'il te faut ! 💪",
+    ],
+  },
+  {
+    patterns: [/^(oui|ouais|yep|yes|si|vero|true|exact|exactement|c'est ça|bien sûr|surement|je veux|je vais)$/i],
+    responses: [
+      "Top ! 👍 Dis-moi ce que tu veux faire.",
+      "Parfait, dis-moi la suite ! 😊",
+      "OK ! Qu'est-ce que tu veux qu'on fasse maintenant ? 💪",
+    ],
+  },
+  {
+    patterns: [/^(non|nan|nah|nope|pas du tout|jamais)$/i],
+    responses: [
+      "Pas de souci ! 😊 On fait quoi d'autre alors ?",
+      "D'accord, tu me diras ! 💬",
+      "OK, je reste là si tu changes d'avis ! 😊",
+    ],
+  },
+  {
+    patterns: [/^(test|testing|cc|slm|salam|slt|alaikoum|aslema|ahlan|bzef|jihan|mzyan|zwina|hna)$/i],
+    responses: [
+      "Wa 3alikoum salam ! 😊 Comment je peux t'aider ?",
+      "Salam ! 👋 Tout va bien ? Dis-moi comment je peux t'aider.",
+      "Hey ! 😊 Je suis là, dis-moi ce que tu veux.",
+    ],
+  },
+  {
+    patterns: [/^(lol|mdr|ptdr|ahaha|hahaha|jaja|xddd|💀|😂|🤣)$/i],
+    responses: [
+      "Haha 😄 Tu es de bonne humeur ! Continue, dis-moi ce que tu veux faire.",
+      "MDR 😂 Tu es trop marrant ! On fait quoi maintenant ?",
+      "😂👍 Je suis là si tu as besoin de quoi que ce soit.",
+    ],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -153,13 +216,29 @@ function detectLanguage(text: string): "fr" | "ar" | "darija" | "en" {
 
 function detectExperiment(query: string): string | undefined {
   const q = query.toLowerCase();
-  if (q.includes("circuit") || q.includes("rc") || q.includes("condensateur") || q.includes("charge")) return "circuit";
-  if (q.includes("dosage") || q.includes("ph") || q.includes("acide") || q.includes("base") || q.includes("titrage")) return "dosage";
+  if (q.includes("circuit") || q.includes("condensateur") || q.includes("décharge")) return "circuit";
+  if (q.includes("dosage") || q.includes("ph") || q.includes("titrage")) return "dosage";
   if (q.includes("fonction") || q.includes("graphique") || q.includes("courbe") || q.includes("parabole") || q.includes("quadratique") || q.includes("sinus") || q.includes("exponentielle") || q.includes("logarithme")) return "fonction";
   if (q.includes("onde") || q.includes("propagation") || q.includes("fréquence")) return "onde";
   if (q.includes("pendule") || q.includes("oscillation") || q.includes("ressort")) return "oscillation";
   if (q.includes("molécule") || q.includes("molecule") || q.includes("structure")) return "molecule";
   return undefined;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎭 DÉTECTION DE CONVERSATION GÉNÉRALE
+// Vérifie si le message est une conversation générale (pas éducative)
+// ═══════════════════════════════════════════════════════════════
+
+function isGeneralConversation(query: string): boolean {
+  const lower = query.toLowerCase().trim();
+  // Messages très courts (1-3 mots) sans mots éducatifs
+  const words = lower.split(/\s+/);
+  if (words.length <= 3) return true;
+  // Messages contenant des emojis principalement
+  const withoutEmoji = lower.replace(/[\p{Emoji}\p{Emoji_Component}]/gu, "").trim();
+  if (withoutEmoji.length < 5) return true;
+  return false;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -239,24 +318,8 @@ export function processMessage(
     }
   }
 
-  // ─── DISCUSSION GÉNÉRALE (hors éducation) ───
-  // Si pas de match éducatif ET pas d'expérience détectée → vérifier les sujets généraux
-  if (bestScore === 0 && !experiment) {
-    for (const topic of generalTopics) {
-      if (topic.keywords.some((kw) => lower.includes(kw))) {
-        return {
-          response: topic.response,
-          experiment: undefined,
-          hints: [],
-          suggestions: [],
-          mode: "general",
-        };
-      }
-    }
-  }
-
-  // ─── RÉPONSES SPÉCIALES ───
-  if (lower.includes("pas compris") || lower.includes("pas compris") || lower.includes("j'ai pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
+  // ─── RÉPONSES SPÉCIALES (réformulation, exemples) ───
+  if (lower.includes("pas compris") || lower.includes("j'ai pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
     const reformulations = [
       "Je vais t'expliquer autrement :\n\n",
       "Pas de souci, voici une autre approche :\n\n",
@@ -294,7 +357,53 @@ export function processMessage(
     };
   }
 
-  // ─── RÉPONSE GÉNÉRIQUE ───
+  // ─── DISCUSSION GÉNÉRALE : sujets prédéfinis ───
+  if (bestScore === 0 && !experiment) {
+    for (const topic of generalTopics) {
+      if (topic.keywords.some((kw) => lower.includes(kw))) {
+        return {
+          response: topic.response,
+          experiment: undefined,
+          hints: [],
+          suggestions: [],
+          mode: "general",
+        };
+      }
+    }
+  }
+
+  // ─── MESSAGES COURTS : réponses conversationnelles aléatoires ───
+  if (isGeneralConversation(query) && bestScore === 0 && !experiment) {
+    for (const group of shortResponses) {
+      if (group.patterns.some((p) => p.test(lower))) {
+        const response = group.responses[Math.floor(Math.random() * group.responses.length)];
+        return {
+          response,
+          experiment: undefined,
+          hints: [],
+          suggestions: ["Explique-moi les limites", "Montre-moi un circuit RC", "Dis-moi une blague"],
+          mode: "general",
+        };
+      }
+    }
+
+    // Messages courts sans pattern reconnu → réponse conversationnelle naturelle
+    const fallbackShort = [
+      `Hmm, " ${query} " 😄\n\nDis-moi plus et je te réponds ! On peut parler de tout — cours, sport, musique, ou n'importe quoi d'autre.`,
+      `"${query}" — interesting ! 🤔\n\nTu veux qu'on en parle, ou tu avais autre chose en tête ?`,
+      `OK ! 😊 Tu veux qu'on discute de ça, ou tu veux passer à autre chose ?`,
+      `Hmm, je vois ! 🤔\n\nExplique-moi un peu plus et je te réponds du mieux que je peux.`,
+    ];
+    return {
+      response: fallbackShort[Math.floor(Math.random() * fallbackShort.length)],
+      experiment: undefined,
+      hints: [],
+      suggestions: ["Explique-moi les limites", "Montre-moi un circuit RC", "Dis-moi une blague"],
+      mode: "general",
+    };
+  }
+
+  // ─── LANGUE ARABE ───
   if (lang === "ar") {
     return {
       response: `أنا هنا لمساعدتك! 🎓\n\nيمكنني مساعدتك في:\n• 📐 الرياضيات: حدود، اشتقاق، تكامل\n• ⚛️ الفيزياء: دوائر، ميكانيك، أمواج\n• 🧪 الكيمياء: تراكيز، تفاعلات، جزيئات\n\nحاول تطرح سؤال أكثر تحديداً!`,
@@ -305,12 +414,17 @@ export function processMessage(
     };
   }
 
-  // ─── FALLBACK : on ne sait pas → discussion libre ───
+  // ─── FALLBACK FINAL : conversation naturelle ───
+  const finalFallback = [
+    `Hmm, " ${query} " 🤔\n\nJe ne suis pas sûr de comprendre, mais je suis là pour toi ! On peut discuter de tout — cours, musique, sport, jeux...\n\nOu si tu veux de l'aide scolaire, essaie : "explique-moi les limites" ou "montre-moi un circuit RC". 😊`,
+    `Intéressant ! 🤔\n\nJe ne suis pas sûr de saisir le sujet exact, mais je peux :\n• 💬 Discuter de n'importe quoi\n• 📐 T'aider en maths, physique ou chimie\n• 🧪 Te montrer des simulations\n\nEssaie de reformuler ou demande-moi n'importe quoi ! 💪`,
+    `Ah, " ${query} " ! 😊\n\nDis-moi un peu plus et je te réponds. Je suis là pour discuter ou pour t'aider à réviser — comme tu veux !`,
+  ];
   return {
-    response: `Je suis ton assistant scientifique ! 🧪\n\nJe peux t'aider avec :\n• 📐 **Mathématiques** : limites, dérivation, suites, intégrales\n• ⚛️ **Physique** : circuits, mécanique, ondes, oscillations\n• 🧪 **Chimie** : dosages, réactions, molécules\n\nOu on peut discuter de n'importe quoi — musique, jeux, sport, technologie... 😊\n\nEssaie de me poser une question ou choisis une expérience !`,
+    response: finalFallback[Math.floor(Math.random() * finalFallback.length)],
     experiment: undefined,
     hints: [],
-    suggestions: ["Explique-moi les limites", "Montre-moi un circuit RC", "Montre-moi un dosage"],
+    suggestions: ["Explique-moi les limites", "Montre-moi un circuit RC", "Dis-moi une blague"],
     mode: "general",
   };
 }
