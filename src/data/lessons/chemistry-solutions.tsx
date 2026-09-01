@@ -400,6 +400,7 @@ export function getChemistrySolutionsSections(): LessonSection[] {
             { label: "Structure CO₂", icon: "⚛️", description: "Dioxyde de carbone", variant: "molecule-co2" },
             { label: "Fiole graduée", icon: "🧪", description: "Matériel de laboratoire", variant: "lab-beaker" },
             { label: "pH-mètre", icon: "🧪", description: "Instrument de mesure du pH", variant: "lab-ph" },
+            { label: "🔮 Molécules 3D", icon: "🔮", description: "Vue 3D interactive des molécules", variant: "molecule-3d" },
           ]}
         />
       ),

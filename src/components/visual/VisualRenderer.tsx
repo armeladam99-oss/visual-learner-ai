@@ -8,6 +8,9 @@ import { CircuitDiagram } from "./CircuitDiagram";
 import { FreeBodyDiagram } from "./FreeBodyDiagram";
 import { MolecularStructure } from "./MolecularStructure";
 import { PolynomialSolver } from "./PolynomialSolver";
+import { MoleculeViewer3D } from "./MoleculeViewer3D";
+import { PhysicsSimulation } from "./PhysicsSimulation";
+import { MathGeometry3D } from "./MathGeometry3D";
 import { LabEquipment } from "./LabEquipment";
 import { VectorDiagram } from "./VectorDiagram";
 import { WaveDiagram } from "./WaveDiagram";
@@ -500,6 +503,38 @@ export function VisualRenderer({ variant, subject }: VisualRendererProps) {
 
         {subject === "chemistry" && variant === "molecule-all" && (
           <MolecularStructure />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-3d" && (
+          <MoleculeViewer3D />
+        )}
+
+        {subject === "physics" && variant === "sim-projectile" && (
+          <PhysicsSimulation variant="projectile" />
+        )}
+
+        {subject === "physics" && variant === "sim-pendulum" && (
+          <PhysicsSimulation variant="pendulum" />
+        )}
+
+        {subject === "physics" && variant === "sim-wave" && (
+          <PhysicsSimulation variant="wave" />
+        )}
+
+        {subject === "physics" && variant === "sim-oscillation" && (
+          <PhysicsSimulation variant="oscillation" />
+        )}
+
+        {subject === "math" && variant === "3d-parabola" && (
+          <MathGeometry3D variant="parabola" />
+        )}
+
+        {subject === "math" && variant === "3d-sphere" && (
+          <MathGeometry3D variant="sphere" />
+        )}
+
+        {subject === "math" && variant === "3d-cone" && (
+          <MathGeometry3D variant="cone" />
         )}
 
         {subject === "chemistry" && variant === "molecule-water" && (

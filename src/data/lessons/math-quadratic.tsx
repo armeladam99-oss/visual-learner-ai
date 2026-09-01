@@ -713,6 +713,24 @@ export function getMathQuadraticSections(): LessonSection[] {
               description: "Entre a, b, c et obtiens le graphique + tableau de variations",
               variant: "polynomial-solver",
             },
+            {
+              label: "🔮 Parabole 3D",
+              icon: "🔮",
+              description: "Vue 3D de la parabole de révolution",
+              variant: "3d-parabola",
+            },
+            {
+              label: "🔮 Sphère",
+              icon: "🔮",
+              description: "Modèle 3D interactif",
+              variant: "3d-sphere",
+            },
+            {
+              label: "🔮 Cône",
+              icon: "🔮",
+              description: "Modèle 3D interactif",
+              variant: "3d-cone",
+            },
           ]}
         />
       ),

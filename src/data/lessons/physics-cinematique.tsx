@@ -500,6 +500,10 @@ export function getPhysicsCinematiqueSections(): LessonSection[] {
             { label: "Décomposition vectorielle", icon: "📏", description: "Composantes Fx et Fy", variant: "decomposition" },
             { label: "Onde progressive", icon: "🌊", description: "Amplitude, fréquence, λ", variant: "wave-progressive" },
             { label: "Onde stationnaire", icon: "〰️", description: "Nœuds et ventres", variant: "wave-stationary" },
+            { label: "🎯 Simulation projectile", icon: "🎯", description: "Lance un projectile et observe la trajectoire", variant: "sim-projectile" },
+            { label: "🎡 Simulation pendule", icon: "🎡", description: "Oscillations d'un pendule avec amortissement", variant: "sim-pendulum" },
+            { label: "🌊 Simulation onde", icon: "🌊", description: "Onde progressive animée", variant: "sim-wave" },
+            { label: "⚙️ Simulation oscillation", icon: "⚙️", description: "Ressort-masse oscillant", variant: "sim-oscillation" },
           ]}
         />
       ),
