@@ -14,6 +14,7 @@ import {
   AreaChart,
 } from "recharts";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
@@ -199,17 +200,30 @@ export function InteractiveGraph({
             </ResponsiveContainer>
           </div>
 
-          {/* Sliders */}
+          {/* Sliders + Inputs */}
           {paramDefs.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {paramDefs.map((param) => (
                 <div key={param.symbol} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-foreground">
-                      {param.name}
-                    </label>
-                    <span className="text-sm font-mono font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded">
-                      {param.symbol} = {paramValues[param.symbol]}
+                  <label className="text-sm font-medium text-foreground">
+                    {param.name}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={paramValues[param.symbol]}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        if (!isNaN(v)) {
+                          const clamped = Math.min(param.max, Math.max(param.min, v));
+                          setParamValues((prev) => ({ ...prev, [param.symbol]: clamped }));
+                        }
+                      }}
+                      className="h-8 text-sm font-mono font-semibold text-center w-20 border-primary/30 focus:border-primary"
+                      step={param.step}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      [{param.min} → {param.max}]
                     </span>
                   </div>
                   <Slider
@@ -221,10 +235,6 @@ export function InteractiveGraph({
                       setParamValues((prev) => ({ ...prev, [param.symbol]: val }))
                     }
                   />
-                  <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>{param.min}</span>
-                    <span>{param.max}</span>
-                  </div>
                 </div>
               ))}
             </div>

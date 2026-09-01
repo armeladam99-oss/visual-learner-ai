@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 
 interface PolynomialResult {
   delta: number;
@@ -347,44 +348,85 @@ export function PolynomialSolver() {
             </div>
           </div>
 
-          {/* Sliders */}
+          {/* Coefficients input */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Coefficient a</label>
-                <span className="text-xs font-mono font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded">
-                  a = {a}
+              <label className="text-xs font-medium text-foreground">Coefficient a</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={a}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) setA(v);
+                  }}
+                  className="h-9 text-sm font-mono font-semibold text-center w-20 border-primary/30 focus:border-primary"
+                  step="0.5"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  {a > 0 ? "↑ Haut" : a < 0 ? "↓ Bas" : "→ Linéaire"}
                 </span>
               </div>
               <Slider min={-5} max={5} step={0.5} value={[a]} onValueChange={([v]) => setA(v)} />
-              <p className="text-[10px] text-muted-foreground text-center">
-                {a > 0 ? "↑ Parabole vers le haut" : a < 0 ? "↓ Parabole vers le bas" : "→ Linéaire (a=0)"}
-              </p>
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Coefficient b</label>
-                <span className="text-xs font-mono font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded">
-                  b = {b}
+              <label className="text-xs font-medium text-foreground">Coefficient b</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={b}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) setB(v);
+                  }}
+                  className="h-9 text-sm font-mono font-semibold text-center w-20 border-emerald-500/30 focus:border-emerald-500"
+                  step="0.5"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  Sommet décalé
                 </span>
               </div>
-              <Slider min={-10} max={10} step={0.5} value={[b]} onValueChange={([v]) => setB(v)} />
-              <p className="text-[10px] text-muted-foreground text-center">
-                Décalage horizontal du sommet
-              </p>
+              <Slider min={-20} max={20} step={0.5} value={[b]} onValueChange={([v]) => setB(v)} />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Constante c</label>
-                <span className="text-xs font-mono font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded">
-                  c = {c}
+              <label className="text-xs font-medium text-foreground">Constante c</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={c}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v)) setC(v);
+                  }}
+                  className="h-9 text-sm font-mono font-semibold text-center w-20 border-amber-500/30 focus:border-amber-500"
+                  step="0.5"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  Ordonnée à l&apos;origine
                 </span>
               </div>
-              <Slider min={-10} max={10} step={0.5} value={[c]} onValueChange={([v]) => setC(v)} />
-              <p className="text-[10px] text-muted-foreground text-center">
-                Ordonnée à l&apos;origine
-              </p>
+              <Slider min={-20} max={20} step={0.5} value={[c]} onValueChange={([v]) => setC(v)} />
             </div>
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            <span className="text-[10px] text-muted-foreground">Exemples rapides :</span>
+            {[
+              { a: 1, b: -2, c: 1, label: "x²−2x+1" },
+              { a: 1, b: 0, c: -4, label: "x²−4" },
+              { a: -1, b: 2, c: 3, label: "−x²+2x+3" },
+              { a: 2, b: -8, c: 6, label: "2x²−8x+6" },
+              { a: 1, b: 4, c: 5, label: "x²+4x+5" },
+            ].map((p) => (
+              <button
+                key={p.label}
+                onClick={() => { setA(p.a); setB(p.b); setC(p.c); }}
+                className="px-2 py-0.5 rounded-md bg-muted/50 text-[10px] font-mono text-muted-foreground hover:bg-muted transition-colors"
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
 
           {/* Graph */}
