@@ -68,49 +68,49 @@ const knowledgeBase: Record<string, {
   suggestions?: string[];
 }> = {
   limites: {
-    keywords: ["limite", "limites", "continuité", "continuité", "tend vers"],
-    response: `**Les limites** décrivent le comportement d'une fonction quand x tend vers une valeur.\n\n**Définition intuitive :**\nLa limite de f(x) quand x → a est ℓ si f(x) se rapproche de ℓ quand x se rapproche de a.\n\n**Notation :** lim(x→a) f(x) = ℓ\n\n**Limites usuelles :**\n• lim(x→0) sin(x)/x = 1\n• lim(x→+∞) e^x = +∞\n• lim(x→+∞) 1/x = 0\n• lim(x→0) ln(x) = −∞\n\n**Règles :**\n• lim(f + g) = lim f + lim g\n• lim(f × g) = lim f × lim g\n• lim(f/g) = lim f / lim g\n\n**Indéterminations :** 0/0, ∞/∞, 0×∞, ∞−∞`,
+    keywords: ["limite", "limites", "continuité", "tend vers"],
+    response: "**Les limites** décrivent le comportement d'une fonction quand x tend vers une valeur.\n\n**Définition intuitive :**\nLa limite de f(x) quand x → a est ℓ si f(x) se rapproche de ℓ quand x se rapproche de a.\n\n**Notation :** lim(x→a) f(x) = ℓ\n\n**Limites usuelles :**\n• lim(x→0) sin(x)/x = 1\n• lim(x→+∞) e^x = +∞\n• lim(x→+∞) 1/x = 0\n• lim(x→0) ln(x) = −∞\n\n**Règles :**\n• lim(f + g) = lim f + lim g\n• lim(f × g) = lim f × lim g\n• lim(f/g) = lim f / lim g\n\n**Indéterminations :** 0/0, ∞/∞, 0×∞, ∞−∞",
     experiment: "fonction",
     suggestions: ["Montre-moi une fonction logarithme", "Explique-moi la continuité", "Résous un exercice"],
   },
   derivation: {
     keywords: ["dérivée", "derivée", "dérivation", "pente", "tangente", "variation", "extremum"],
-    response: `**La dérivée** d'une fonction en un point est la pente de la tangente.\n\n**Définition :**\nf'(x₀) = lim(h→0) [f(x₀+h) − f(x₀)] / h\n\n**Interprétation :**\n• f'(x) > 0 → croissante\n• f'(x) < 0 → décroissante\n• f'(x) = 0 → extremum\n\n**Formules essentielles :**\n• (xⁿ)' = n·xⁿ⁻¹\n• (eˣ)' = eˣ\n• (ln x)' = 1/x\n• (sin x)' = cos x\n• (u×v)' = u'×v + u×v'`,
+    response: "**La dérivée** d'une fonction en un point est la pente de la tangente.\n\n**Définition :**\nf'(x₀) = lim(h→0) [f(x₀+h) − f(x₀)] / h\n\n**Interprétation :**\n• f'(x) > 0 → croissante\n• f'(x) < 0 → décroissante\n• f'(x) = 0 → extremum\n\n**Formules essentielles :**\n• (xⁿ)' = n·xⁿ⁻¹\n• (eˣ)' = eˣ\n• (ln x)' = 1/x\n• (sin x)' = cos x\n• (u×v)' = u'×v + u×v'",
     experiment: "fonction",
     suggestions: ["Montre-moi une parabole avec sa dérivée", "Résous un exercice"],
   },
   suite: {
-    keywords: ["suite", "suites", "suites numériques", "convergence", "fibonacci"],
-    response: `**Une suite numérique** est une application de ℕ dans ℝ.\n\n**Modes de génération :**\n• Explicite : uₙ = f(n)\n• Récurrence : uₙ₊₁ = f(uₙ)\n\n**Suites usuelles :**\n• Arithmétique : uₙ = u₀ + n×r\n• Géométrique : uₙ = u₀×qⁿ\n\n**Convergence :**\n• Arithmétique : ⟺ r = 0\n• Géométrique : ⟺ |q| < 1\n\n**Théorème des gendarmes :**\nSi aₙ ≤ uₙ ≤ bₙ et lim aₙ = lim bₙ = ℓ, alors lim uₙ = ℓ.`,
+    keywords: ["suite", "suites", "suites numériques", "convergence"],
+    response: "**Une suite numérique** est une application de ℕ dans ℝ.\n\n**Modes de génération :**\n• Explicite : uₙ = f(n)\n• Récurrence : uₙ₊₁ = f(uₙ)\n\n**Suites usuelles :**\n• Arithmétique : uₙ = u₀ + n×r\n• Géométrique : uₙ = u₀×qⁿ\n\n**Convergence :**\n• Arithmétique : ⟺ r = 0\n• Géométrique : ⟺ |q| < 1\n\n**Théorème des gendarmes :**\nSi aₙ ≤ uₙ ≤ bₙ et lim aₙ = lim bₙ = ℓ, alors lim uₙ = ℓ.",
     suggestions: ["Montre-moi une suite arithmétique", "Montre-moi une suite géométrique"],
   },
   circuit_rc: {
-    keywords: ["circuit rc", "condensateur", "charge", "décharge", "constante de temps", "résistance", "capacité"],
-    response: `**Circuit RC** = Résistance + Condensateur en série.\n\n**Constante de temps :** τ = R × C\n\n**Charge :** Uc(t) = U₀(1 − e^(−t/τ))\n**Décharge :** Uc(t) = U₀ × e^(−t/τ)\n\n**Points clés :**\n• t = τ : 63% chargé\n• t = 3τ : 95%\n• t = 5τ : 99%`,
+    keywords: ["circuit rc", "condensateur", "charge", "décharge", "constante de temps"],
+    response: "**Circuit RC** = Résistance + Condensateur en série.\n\n**Constante de temps :** τ = R × C\n\n**Charge :** Uc(t) = U₀(1 − e^(−t/τ))\n**Décharge :** Uc(t) = U₀ × e^(−t/τ)\n\n**Points clés :**\n• t = τ : 63% chargé\n• t = 3τ : 95%\n• t = 5τ : 99%",
     experiment: "circuit",
     suggestions: ["Lance la simulation circuit RC", "Que se passe-t-il si on double R ?"],
   },
   projectile: {
     keywords: ["projectile", "mouvement", "parabolique", "chute libre", "trajectoire"],
-    response: `**Mouvement parabolique :**\n• Horizontal : x(t) = v₀·cos(θ)·t\n• Vertical : y(t) = v₀·sin(θ)·t − ½gt²\n\n**Portée :** R = v₀²·sin(2θ)/g\n**Hauteur max :** H = v₀²·sin²(θ)/(2g)\n**Angle optimal :** θ = 45°`,
+    response: "**Mouvement parabolique :**\n• Horizontal : x(t) = v₀·cos(θ)·t\n• Vertical : y(t) = v₀·sin(θ)·t − ½gt²\n\n**Portée :** R = v₀²·sin(2θ)/g\n**Hauteur max :** H = v₀²·sin²(θ)/(2g)\n**Angle optimal :** θ = 45°",
     experiment: "projectile",
     suggestions: ["Lance la simulation projectile", "Pourquoi 45° est optimal ?"],
   },
   ondes: {
     keywords: ["onde", "ondes", "fréquence", "longueur d'onde", "propagation"],
-    response: `**Onde :** transporte de l'énergie sans matière.\n\n**v = λ × f**\n\n**Types :**\n• Mécaniques : son, vagues\n• EM : lumière, radio\n\n**Phénomènes :** réflexion, réfraction, diffraction, interférence.`,
+    response: "**Onde :** transporte de l'énergie sans matière.\n\n**v = λ × f**\n\n**Types :**\n• Mécaniques : son, vagues\n• EM : lumière, radio\n\n**Phénomènes :** réflexion, réfraction, diffraction, interférence.",
     experiment: "onde",
     suggestions: ["Lance la simulation onde", "Différence son/lumière ?"],
   },
   dosage: {
     keywords: ["dosage", "ph", "acide", "base", "acido-basique", "titrage", "équivalence"],
-    response: `**Dosage acido-basique :**\n• pH = −log[H₃O⁺]\n• Point d'équivalence : n_acide = n_base\n• Formule : C₁V₁ = C₂V₂\n\n**Acide fort + Base forte → pH = 7**\n**Acide faible + Base forte → pH > 7**`,
+    response: "**Dosage acido-basique :**\n• pH = −log[H₃O⁺]\n• Point d'équivalence : n_acide = n_base\n• Formule : C₁V₁ = C₂V₂\n\n**Acide fort + Base forte → pH = 7**\n**Acide faible + Base forte → pH > 7**",
     experiment: "dosage",
     suggestions: ["Lance la simulation dosage", "Acide fort vs faible ?"],
   },
   moleculaire: {
     keywords: ["molécule", "molécules", "liaison", "structure", "atome", "composé"],
-    response: `**Liaisons chimiques :**\n• Ionique : transfert e⁻ (NaCl)\n• Covalente : partage e⁻ (H₂O)\n• Métallique : bain d'e⁻ (Fe)\n\n**Géométrie :**\n• Linéaire : CO₂ (180°)\n• Coudée : H₂O (104,5°)\n• Tétrédrique : CH₄ (109,5°)`,
+    response: "**Liaisons chimiques :**\n• Ionique : transfert e⁻ (NaCl)\n• Covalente : partage e⁻ (H₂O)\n• Métallique : bain d'e⁻ (Fe)\n\n**Géométrie :**\n• Linéaire : CO₂ (180°)\n• Coudée : H₂O (104,5°)\n• Tétrédrique : CH₄ (109,5°)",
     suggestions: ["Montre-moi des molécules en 3D", "Ionique vs covalente ?"],
   },
 };
@@ -120,80 +120,55 @@ const knowledgeBase: Record<string, {
 // ═══════════════════════════════════════════════════════════════
 
 const generalTopics = [
-  { keywords: ["salut", "bonjour", "bonsoir", "coucou", "hey", "hello", "ça va", "ca va", "comment ça va", "comment vas-tu", "ça roule", "wesh", "yo"], response: `Salut ! 😊 Comment ça va ?\n\nJe suis ton assistant, et je suis aussi là pour discuter de tout ce que tu veux. Tu veux qu'on parle de quelque chose en particulier ?` },
-  { keywords: ["minecraft", "jeux", "jeu", "gaming", "playstation", "xbox", "nintendo", "fortnite", "valorant", "lol", "league of legends", "fifa", "rocket league"], response: `Minecraft ! 🎮 Un classique !\n\nLe jeu de construction et de survie par Mojang. Tu peux construire des maisons, explorer des cavernes, affronter des monstres...\n\nEt savais-tu que Minecraft utilise des algorithmes de **génération procédurale** pour créer les mondes ? C'est un peu comme des maths appliquées au divertissement ! 🧮\n\nTu veux qu'on parle d'autre chose, ou tu as une question ?` },
-  { keywords: ["musique", "chanson", "concert", "spotify", "rap", "pop", "rock", "drill", "afro", "melanie", "booba", "damso", "navy", "gazo"], response: `La musique, c'est super ! 🎵\n\nTu écoutes quoi en ce moment ? Moi je trouve ça fascinant comment les ondes sonores créent de la musique — c'est de la physique pure ! Les fréquences, les harmoniques, le rythme...\n\nSi tu veux, je peux t'expliquer la physique du son, ou on peut juste discuter de musique. Comme tu veux ! 😊` },
-  { keywords: ["film", "films", "série", "séries", "netflix", "disney", "anime", "naruto", "one piece", "jujutsu", "demon slayer"], response: `Ah les séries et films ! 🎬\n\nTu regardes quoi en ce moment ? Les animes c'est pas mal aussi — il y a beaucoup de science dedans si tu y prêtes attention !\n\nTu veux continuer à discuter ou tu as un cours à réviser ?` },
-  { keywords: ["sport", "football", "basketball", "basket", "f1", "formula 1", "mma", "boxe", "tennis", "atletico", "real madrid", "barcelona", "psg", "inter", "juventus"], response: `Le sport ! ⚽🏀\n\nC'est un domaine où la physique est très présente — les trajectoires, la vitesse, l'énergie cinétique...\n\nTu suis quel sport ? Et si tu veux, je peux t'expliquer la physique derrière un tir au but, un dunk, ou un virage en F1 ! 😊` },
-  { keywords: ["techno", "technologie", "tech", "iphone", "samsung", "ai", "intelligence artificielle", "robot", "spacex", "tesla", "google"], response: `La technologie, c'est passionnant ! 🚀\n\nTu t'intéresses à quoi ? L'IA, la space, les phones, les voitures électriques ?\n\nC'est marrant parce que derrière toute la tech, il y a des maths et de la physique — des circuits, des algorithmes, des ondes électromagnétiques...\n\nTu veux qu'on parle tech ou tu as une question ?` },
-  { keywords: ["voyage", "voyager", "pays", "maroc", "france", "dubai", "japon", "travel"], response: `Les voyages, c'est génial ! ✈️🌍\n\nTu veux aller où ? Le Maroc a des trucs incroyables — l'Atlas, le Sahara, les riads de Fès...\n\nEt savais-tu que la navigation utilise des calculs mathématiques complexes ? Les coordonnées GPS, les fuseaux horaires...\n\nOn continue à discuter ou tu veux réviser ?` },
-  { keywords: ["humour", "blague", "drôle", "rire", "meme", "mème"], response: `Tu veux une blague ? 😄\n\nPourquoi les maths sont tristes ?\nParce qu'elles ont trop de problèmes ! 😂\n\nBon, sur ce, tu veux qu'on passe à un sujet plus sérieux ou on continue à rigoler ?` },
-  { keywords: ["merci", "thanks", "super", "génial", "bravo", "parfait", "excellent"], response: `Merci à toi ! 😊\n\nN'hésite pas si tu as d'autres questions, que ce soit de cours ou autre chose. Je suis là ! 💪` },
-  { keywords: ["ok", "d'accord", "d'acc", "ok merci", "c'est bon", "compris", "c'est clair", "noté", "je note", "oui", "ouais"], response: `Parfait ! 😊\n\nN'hésite pas si tu as besoin de quoi que ce soit — cours, exercice, ou juste discuter. Je suis là ! 💪` },
-  { keywords: ["non", "nan", "non merci", "c'est tout", "rien", "pas maintenant"], response: `Pas de souci ! 😊\n\nJe reste là si tu changes d'avis. On peut discuter de tout, pas juste de cours ! 💬` },
-  { keywords: ["qui es-tu", "qui es tu", "t'es qui", "tu es qui", "présentation", "présente-toi", "c'est quoi ton nom", "comment tu t'appelles", "ton nom"], response: `Je suis ton **assistant IA** ! 🧪\n\nMon rôle est de t'aider dans tes révisions, t'expliquer les cours, te montrer des expériences, et répondre à tes questions — que ce soit scolaires ou non !\n\nJe connais les cours de 2e BAC marocain en maths, physique et chimie. Mais je peux aussi discuter de musique, de jeux, de films... de tout ce que tu veux ! 😊` },
-  { keywords: ["âge", "age", "t'es vieux", "t'es jeune", "tu es un humain", "t'es un robot", "es-tu un robot", "t'es une ia", "t'es une intelligence", "tu es une ia", "es tu humain", "tu es humain"], response: `Je suis une intelligence artificielle ! 🤖\n\nJe ne suis pas humain, mais je suis là pour t'aider du mieux possible. Je peux te parler de n'importe quoi — cours, sport, musique, technologie...\n\nEt si tu as besoin d'aide pour réviser, je suis ton meilleur allié ! 💪` },
-  { keywords: ["dormir", "fatigué", "fatigue", "coupé", "las", "lassée", "je suis crevé", "fatigant", "ennuyeux", "ennui", "chiant", "saoule", "saoul", "marre", "lourd"], response: `Je comprends, ça arrive d'être fatigué ou ennuyé ! 😅\n\nTu veux qu'on fasse quelque chose de plus interactif ? Je peux te monter une simulation dans le labo, ou on peut discuter de quelque chose qui t'intéresse vraiment.\n\nSinon, prends une pause — réviser c'est important mais le repos aussi ! 💤` },
-  { keywords: ["j'ai faim", "manger", "nourriture", "repas", "faim", "pizza", "couscous", "tajine", "kefta"], response: `La faim, c'est un sérieux sujet ! 🍕😋\n\nTu veux manger quoi ? Le Maroc a des plats incroyables — le couscous, le tajine, les brochettes...\n\nBon, je ne peux pas te cuisiner, mais je peux te distraire pendant que tu attends ! Tu veux qu'on discute ou tu veux réviser pendant que ça cuit ? 😄` },
-  { keywords: ["ami", "amis", "copain", "copine", "pote", "meilleur ami", "relation", "amour", "amoureuse", "arseille", "crush"], response: `Les relations, c'est un sujet important ! 😊\n\nC'est bien d'avoir des amis et des gens autour de soi. Les amitiés du lycée sont souvent celles qu'on retient le plus !\n\nTu veux en parler, ou tu préfères qu'on fasse autre chose ? 💬` },
-  { keywords: ["bref", "bon", "bon sang", "quoi d'autre", "sinon", "et toi", "parle moi", "discute", "raconte"], response: `Allez, on discute ! 😊\n\nDis-moi, qu'est-ce qui te passe par la tête ? On peut parler de n'importe quoi — ton jour, la vie, des projets, des trucs rigolos... 🎯` },
-  { keywords: ["pourquoi", "comment", "quest-ce que", "c'est quoi", "ça veut dire", "définition"], response: `Bonne question ! 🤔\n\nDis-moi exactement de quoi tu parles, et je t'explique clairement. Tu peux me poser des questions sur n'importe quoi — cours ou pas cours !` },
-  { keywords: ["non merci", "pas envie", "j'en ai marre", "laisse tomber", "oublie", "stop", "arrête"], response: `Pas de souci, j'arrête ! 😊\n\nTu me diras quand tu voudras reprendre. Je suis toujours là. 💬` },
+  { keywords: ["salut", "bonjour", "bonsoir", "coucou", "hey", "hello", "ça va", "ca va", "comment ça va", "comment vas-tu", "ça roule", "wesh", "yo"], response: "Salut ! 😊 Comment ça va ?\n\nJe suis ton assistant, et je suis aussi là pour discuter de tout ce que tu veux. Tu veux qu'on parle de quelque chose en particulier ?" },
+  { keywords: ["minecraft", "jeux", "jeu", "gaming", "playstation", "xbox", "nintendo", "fortnite", "valorant", "lol", "league of legends", "fifa", "rocket league"], response: "Minecraft ! 🎮 Un classique !\n\nLe jeu de construction et de survie par Mojang. Tu peux construire des maisons, explorer des cavernes, affronter des monstres...\n\nEt savais-tu que Minecraft utilise des algorithmes de **génération procédurale** pour créer les mondes ? C'est un peu comme des maths appliquées au divertissement ! 🧮\n\nTu veux qu'on parle d'autre chose, ou tu as une question ?" },
+  { keywords: ["musique", "chanson", "concert", "spotify", "rap", "pop", "rock", "drill", "afro", "melanie", "booba", "damso", "navy", "gazo"], response: "La musique, c'est super ! 🎵\n\nTu écoutes quoi en ce moment ? Moi je trouve ça fascinant comment les ondes sonores créent de la musique — c'est de la physique pure ! Les fréquences, les harmoniques, le rythme...\n\nSi tu veux, je peux t'expliquer la physique du son, ou on peut juste discuter de musique. Comme tu veux ! 😊" },
+  { keywords: ["film", "films", "série", "séries", "netflix", "disney", "anime", "naruto", "one piece", "jujutsu", "demon slayer"], response: "Ah les séries et films ! 🎬\n\nTu regardes quoi en ce moment ? Les animes c'est pas mal aussi — il y a beaucoup de science dedans si tu y prêtes attention !\n\nTu veux continuer à discuter ou tu as un cours à réviser ?" },
+  { keywords: ["sport", "football", "basketball", "basket", "f1", "formula 1", "mma", "boxe", "tennis", "atletico", "real madrid", "barcelona", "psg", "inter", "juventus"], response: "Le sport ! ⚽🏀\n\nC'est un domaine où la physique est très présente — les trajectoires, la vitesse, l'énergie cinétique...\n\nTu suis quel sport ? Et si tu veux, je peux t'expliquer la physique derrière un tir au but, un dunk, ou un virage en F1 ! 😊" },
+  { keywords: ["techno", "technologie", "tech", "iphone", "samsung", "ai", "intelligence artificielle", "robot", "spacex", "tesla", "google"], response: "La technologie, c'est passionnant ! 🚀\n\nTu t'intéresses à quoi ? L'IA, la space, les phones, les voitures électriques ?\n\nC'est marrant parce que derrière toute la tech, il y a des maths et de la physique — des circuits, des algorithmes, des ondes électromagnétiques...\n\nTu veux qu'on parle tech ou tu as une question ?" },
+  { keywords: ["voyage", "voyager", "pays", "maroc", "france", "dubai", "japon", "travel"], response: "Les voyages, c'est génial ! ✈️🌍\n\nTu veux aller où ? Le Maroc a des trucs incroyables — l'Atlas, le Sahara, les riads de Fès...\n\nEt savais-tu que la navigation utilise des calculs mathématiques complexes ? Les coordonnées GPS, les fuseaux horaires...\n\nOn continue à discuter ou tu veux réviser ?" },
+  { keywords: ["humour", "blague", "drôle", "rire", "meme", "mème"], response: "Tu veux une blague ? 😄\n\nPourquoi les maths sont tristes ?\nParce qu'elles ont trop de problèmes ! 😂\n\nBon, sur ce, tu veux qu'on passe à un sujet plus sérieux ou on continue à rigoler ?" },
+  { keywords: ["merci", "thanks", "super", "génial", "bravo", "parfait", "excellent"], response: "Merci à toi ! 😊\n\nN'hésite pas si tu as d'autres questions, que ce soit de cours ou autre chose. Je suis là ! 💪" },
+  { keywords: ["ok", "d'accord", "d'acc", "ok merci", "c'est bon", "compris", "c'est clair", "noté", "oui", "ouais"], response: "Parfait ! 😊\n\nN'hésite pas si tu as besoin de quoi que ce soit — cours, exercice, ou juste discuter. Je suis là ! 💪" },
+  { keywords: ["non", "nan", "non merci", "c'est tout", "rien", "pas maintenant"], response: "Pas de souci ! 😊\n\nJe reste là si tu changes d'avis. On peut discuter de tout, pas juste de cours ! 💬" },
+  { keywords: ["qui es-tu", "qui es tu", "t'es qui", "tu es qui", "présentation", "présente-toi", "c'est quoi ton nom", "comment tu t'appelles", "ton nom"], response: "Je suis ton **assistant IA** ! 🧪\n\nMon rôle est de t'aider dans tes révisions, t'expliquer les cours, te montrer des expériences, et répondre à tes questions — que ce soit scolaires ou non !\n\nJe connais les cours de 2e BAC marocain en maths, physique et chimie. Mais je peux aussi discuter de musique, de jeux, de films... de tout ce que tu veux ! 😊" },
+  { keywords: ["âge", "age", "t'es vieux", "t'es jeune", "tu es un humain", "t'es un robot", "es-tu un robot", "t'es une ia", "t'es une intelligence", "tu es une ia", "es tu humain", "tu es humain"], response: "Je suis une intelligence artificielle ! 🤖\n\nJe ne suis pas humain, mais je suis là pour t'aider du mieux possible. Je peux te parler de n'importe quoi — cours, sport, musique, technologie...\n\nEt si tu as besoin d'aide pour réviser, je suis ton meilleur allié ! 💪" },
+  { keywords: ["dormir", "fatigué", "fatigue", "coupé", "las", "je suis crevé", "fatigant", "ennuyeux", "ennui", "chiant", "saoule", "marre", "lourd"], response: "Je comprends, ça arrive d'être fatigué ou ennuyé ! 😅\n\nTu veux qu'on fasse quelque chose de plus interactif ? Je peux te monter une simulation dans le labo, ou on peut discuter de quelque chose qui t'intéresse vraiment.\n\nSinon, prends une pause — réviser c'est important mais le repos aussi ! 💤" },
+  { keywords: ["j'ai faim", "manger", "nourriture", "repas", "faim", "pizza", "couscous", "tajine", "kefta"], response: "La faim, c'est un sérieux sujet ! 🍕😋\n\nTu veux manger quoi ? Le Maroc a des plats incroyables — le couscous, le tajine, les brochettes...\n\nBon, je ne peux pas te cuisiner, mais je peux te distraire pendant que tu attends ! Tu veux qu'on discute ou tu veux réviser pendant que ça cuit ? 😄" },
+  { keywords: ["ami", "amis", "copain", "copine", "pote", "meilleur ami", "relation", "amour", "amoureuse", "crush"], response: "Les relations, c'est un sujet important ! 😊\n\nC'est bien d'avoir des amis et des gens autour de soi. Les amitiés du lycée sont souvent celles qu'on retient le plus !\n\nTu veux en parler, ou tu préfères qu'on fasse autre chose ? 💬" },
+  { keywords: ["bref", "bon", "quoi d'autre", "sinon", "et toi", "parle moi", "discute", "raconte"], response: "Allez, on discute ! 😊\n\nDis-moi, qu'est-ce qui te passe par la tête ? On peut parler de n'importe quoi — ton jour, la vie, des projets, des trucs rigolos... 🎯" },
+  { keywords: ["pourquoi", "comment", "quest-ce que", "c'est quoi", "ça veut dire", "définition"], response: "Bonne question ! 🤔\n\nDis-moi exactement de quoi tu parles, et je t'explique clairement. Tu peux me poser des questions sur n'importe quoi — cours ou pas cours !" },
+  { keywords: ["non merci", "pas envie", "j'en ai marre", "laisse tomber", "oublie", "stop", "arrête"], response: "Pas de souci, j'arrête ! 😊\n\nTu me diras quand tu voudras reprendre. Je suis toujours là. 💬" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
-// 💬 RÉPONSES CONVERSATIONNELLES COURTES (messages sans contexte éducatif)
+// 💬 RÉPONSES CONVERSATIONNELLES COURTES
 // ═══════════════════════════════════════════════════════════════
 
 const shortResponses: { patterns: RegExp[]; responses: string[] }[] = [
   {
-    patterns: [/^(ah|ah ok|ah ouais|ah oui|oh|oho|waw|wow|waouh|pff|ptdr|mdr|haha|lol|gg|bg|taupe|nul|nulle|sympa|cool|magnifique|incroyable|dingue|ouf|folie)$/i],
-    responses: [
-      "Haha 😄 On continue sur la lancée ou tu veux autre chose ?",
-      "Ah ouais ? 😊 Dis-moi plus, je suis curieux !",
-      "😅 En tout cas je suis là si tu as besoin de quoi que ce soit.",
-      "😄 Toujours là pour toi ! Tu veux qu'on fasse quoi ?",
-    ],
+    patterns: [/^(ah|ah ok|ah ouais|ah oui|oh|oho|waw|wow|waouh|pff|ptdr|mdr|haha|lol|gg|bg|cool|magnifique|incroyable|dingue|ouf|folie)$/i],
+    responses: ["Haha 😄 On continue sur la lancée ou tu veux autre chose ?", "Ah ouais ? 😊 Dis-moi plus, je suis curieux !", "😅 En tout cas je suis là si tu as besoin de quoi que ce soit.", "😄 Toujours là pour toi ! Tu veux qu'on fasse quoi ?"],
   },
   {
-    patterns: [/^(attends|att|patiente|hold on|wait|sec)$/i],
-    responses: [
-      "Je suis là, prends ton temps ! 👍",
-      "Pas de rush, je t'attends. 😊",
-      "Prends le temps qu'il te faut ! 💪",
-    ],
+    patterns: [/^(attends|att|patiente|wait|sec)$/i],
+    responses: ["Je suis là, prends ton temps ! 👍", "Pas de rush, je t'attends. 😊", "Prends le temps qu'il te faut ! 💪"],
   },
   {
-    patterns: [/^(oui|ouais|yep|yes|si|vero|true|exact|exactement|c'est ça|bien sûr|surement|je veux|je vais)$/i],
-    responses: [
-      "Top ! 👍 Dis-moi ce que tu veux faire.",
-      "Parfait, dis-moi la suite ! 😊",
-      "OK ! Qu'est-ce que tu veux qu'on fasse maintenant ? 💪",
-    ],
+    patterns: [/^(oui|ouais|yep|yes|si|exact|exactement|c'est ça|bien sûr|je veux|je vais)$/i],
+    responses: ["Top ! 👍 Dis-moi ce que tu veux faire.", "Parfait, dis-moi la suite ! 😊", "OK ! Qu'est-ce que tu veux qu'on fasse maintenant ? 💪"],
   },
   {
     patterns: [/^(non|nan|nah|nope|pas du tout|jamais)$/i],
-    responses: [
-      "Pas de souci ! 😊 On fait quoi d'autre alors ?",
-      "D'accord, tu me diras ! 💬",
-      "OK, je reste là si tu changes d'avis ! 😊",
-    ],
+    responses: ["Pas de souci ! 😊 On fait quoi d'autre alors ?", "D'accord, tu me diras ! 💬", "OK, je reste là si tu changes d'avis ! 😊"],
   },
   {
-    patterns: [/^(test|testing|cc|slm|salam|slt|alaikoum|aslema|ahlan|bzef|jihan|mzyan|zwina|hna)$/i],
-    responses: [
-      "Wa 3alikoum salam ! 😊 Comment je peux t'aider ?",
-      "Salam ! 👋 Tout va bien ? Dis-moi comment je peux t'aider.",
-      "Hey ! 😊 Je suis là, dis-moi ce que tu veux.",
-    ],
+    patterns: [/^(test|cc|slm|salam|alaikoum|aslema|ahlan|bzef|jihan|mzyan|zwina)$/i],
+    responses: ["Wa 3alikoum salam ! 😊 Comment je peux t'aider ?", "Salam ! 👋 Tout va bien ? Dis-moi comment je peux t'aider.", "Hey ! 😊 Je suis là, dis-moi ce que tu veux."],
   },
   {
-    patterns: [/^(lol|mdr|ptdr|ahaha|hahaha|jaja|xddd|💀|😂|🤣)$/i],
-    responses: [
-      "Haha 😄 Tu es de bonne humeur ! Continue, dis-moi ce que tu veux faire.",
-      "MDR 😂 Tu es trop marrant ! On fait quoi maintenant ?",
-      "😂👍 Je suis là si tu as besoin de quoi que ce soit.",
-    ],
+    patterns: [/^(lol|mdr|ptdr|ahaha|hahaha|jaja|💀|😂|🤣)$/i],
+    responses: ["Haha 😄 Tu es de bonne humeur ! Continue, dis-moi ce que tu veux faire.", "MDR 😂 Tu es trop marrant ! On fait quoi maintenant ?", "😂👍 Je suis là si tu as besoin de quoi que ce soit."],
   },
 ];
 
@@ -227,22 +202,19 @@ function detectExperiment(query: string): string | undefined {
 
 // ═══════════════════════════════════════════════════════════════
 // 🎭 DÉTECTION DE CONVERSATION GÉNÉRALE
-// Vérifie si le message est une conversation générale (pas éducative)
 // ═══════════════════════════════════════════════════════════════
 
 function isGeneralConversation(query: string): boolean {
   const lower = query.toLowerCase().trim();
-  // Messages très courts (1-3 mots) sans mots éducatifs
   const words = lower.split(/\s+/);
   if (words.length <= 3) return true;
-  // Messages contenant des emojis principalement
   const withoutEmoji = lower.replace(/[\p{Emoji}\p{Emoji_Component}]/gu, "").trim();
   if (withoutEmoji.length < 5) return true;
   return false;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🔧 MOTEUR PRINCIPAL
+// 🔧 MOTEUR PRINCIPAL (local, fallback)
 // ═══════════════════════════════════════════════════════════════
 
 export function processMessage(
@@ -318,8 +290,8 @@ export function processMessage(
     }
   }
 
-  // ─── RÉPONSES SPÉCIALES (réformulation, exemples) ───
-  if (lower.includes("pas compris") || lower.includes("j'ai pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
+  // ─── RÉPONSES SPÉCIALES ───
+  if (lower.includes("pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
     const reformulations = [
       "Je vais t'expliquer autrement :\n\n",
       "Pas de souci, voici une autre approche :\n\n",
@@ -337,7 +309,7 @@ export function processMessage(
 
   if (lower.includes("exemple") || lower.includes("exercice")) {
     return {
-      response: `**Exercice d'entraînement** 📝\n\nSoit f(x) = 2x² − 8x + 6\n\n1. Calculer Δ\n2. Trouver les racines\n3. Déterminer le sommet de la parabole\n4. Étudier le signe de f(x)\n\n**Données :** a = 2, b = −8, c = 6\n\nTu veux que je t'aide ou que je te donne la solution ?`,
+      response: "**Exercice d'entraînement** 📝\n\nSoit f(x) = 2x² − 8x + 6\n\n1. Calculer Δ\n2. Trouver les racines\n3. Déterminer le sommet de la parabole\n4. Étudier le signe de f(x)\n\n**Données :** a = 2, b = −8, c = 6\n\nTu veux que je t'aide ou que je te donne la solution ?",
       experiment: experiment,
       hints: ["Commence par calculer le discriminant", "Δ = b² − 4ac", "Ensuite, applique la formule des racines"],
       suggestions: ["Aide-moi (mode indices)", "Donne-moi la solution complète", "Montre-moi le graphique"],
@@ -372,7 +344,7 @@ export function processMessage(
     }
   }
 
-  // ─── MESSAGES COURTS : réponses conversationnelles aléatoires ───
+  // ─── MESSAGES COURTS ───
   if (isGeneralConversation(query) && bestScore === 0 && !experiment) {
     for (const group of shortResponses) {
       if (group.patterns.some((p) => p.test(lower))) {
@@ -387,9 +359,8 @@ export function processMessage(
       }
     }
 
-    // Messages courts sans pattern reconnu → réponse conversationnelle naturelle
     const fallbackShort = [
-      `Hmm, " ${query} " 😄\n\nDis-moi plus et je te réponds ! On peut parler de tout — cours, sport, musique, ou n'importe quoi d'autre.`,
+      `Hmm, "${query}" 😄\n\nDis-moi plus et je te réponds ! On peut parler de tout — cours, sport, musique, ou n'importe quoi d'autre.`,
       `"${query}" — interesting ! 🤔\n\nTu veux qu'on en parle, ou tu avais autre chose en tête ?`,
       `OK ! 😊 Tu veux qu'on discute de ça, ou tu veux passer à autre chose ?`,
       `Hmm, je vois ! 🤔\n\nExplique-moi un peu plus et je te réponds du mieux que je peux.`,
@@ -414,11 +385,11 @@ export function processMessage(
     };
   }
 
-  // ─── FALLBACK FINAL : conversation naturelle ───
+  // ─── FALLBACK FINAL ───
   const finalFallback = [
-    `Hmm, " ${query} " 🤔\n\nJe ne suis pas sûr de comprendre, mais je suis là pour toi ! On peut discuter de tout — cours, musique, sport, jeux...\n\nOu si tu veux de l'aide scolaire, essaie : "explique-moi les limites" ou "montre-moi un circuit RC". 😊`,
+    `Hmm, "${query}" 🤔\n\nJe ne suis pas sûr de comprendre, mais je suis là pour toi ! On peut discuter de tout — cours, musique, sport, jeux...\n\nOu si tu veux de l'aide scolaire, essaie : "explique-moi les limites" ou "montre-moi un circuit RC". 😊`,
     `Intéressant ! 🤔\n\nJe ne suis pas sûr de saisir le sujet exact, mais je peux :\n• 💬 Discuter de n'importe quoi\n• 📐 T'aider en maths, physique ou chimie\n• 🧪 Te montrer des simulations\n\nEssaie de reformuler ou demande-moi n'importe quoi ! 💪`,
-    `Ah, " ${query} " ! 😊\n\nDis-moi un peu plus et je te réponds. Je suis là pour discuter ou pour t'aider à réviser — comme tu veux !`,
+    `Ah, "${query}" ! 😊\n\nDis-moi un peu plus et je te réponds. Je suis là pour discuter ou pour t'aider à réviser — comme tu veux !`,
   ];
   return {
     response: finalFallback[Math.floor(Math.random() * finalFallback.length)],
@@ -430,7 +401,7 @@ export function processMessage(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 📷 ANALYSE D'IMAGE (architecture prête pour vrai LLM)
+// 📷 ANALYSE D'IMAGE
 // ═══════════════════════════════════════════════════════════════
 
 export function analyzeImage(imageDescription: string): string {
@@ -454,4 +425,81 @@ export function createInitialContext(): AIContext {
     photos: [],
     currentMode: "general",
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🤖 VRAI MODÈLE IA — Gemini via Convex Action
+// ═══════════════════════════════════════════════════════════════
+
+const SYSTEM_PROMPT = `Tu es l'assistant scientifique de ProfVisuel, une application éducative pour les élèves de 2e année Bac au Maroc.
+
+IDENTITÉ :
+- Tu es un assistant amical, patient et pédagogique.
+- Tu parles en français (tu peux aussi comprendre l'arabe et le darija marocain).
+- Tu t'adresses à un adolescent de 16-18 ans.
+
+COMPORTEMENT :
+- Tu peux discuter de N'IMPORTE QUOI : musique, jeux vidéo, films, sport, technologie, voyages, humour, vie quotidienne.
+- Tu peux passer naturellement d'une conversation générale à une explication scolaire.
+- Tu n'es JAMAIS limité aux sujets scolaires.
+- Tu es naturel, amical, et tu utilises des emojis avec modération.
+
+QUAND L'ÉLÈVE PARLE DE COURS :
+- Tu expliques clairement, étape par étape.
+- Tu donnes des exemples concrets.
+- Tu utilises des formules mathématiques quand pertinent.
+- Tu t'adresses au programme de 2e BAC marocain : mathématiques, physique, chimie.
+- Tu résous les exercices étape par étape, pas juste la réponse finale.
+- Tu peux proposer des expériences ou simulations quand c'est pertinent.
+
+FORMAT :
+- Réponds de manière concise mais complète.
+- Utilise le markdown quand c'est utile (gras, listes, formules).
+- Ne sois pas trop long sauf si l'élève demande des détails.
+- Si tu ne comprends pas, demande de reformuler.
+
+IMPORTANT :
+- Tu es un assistant conversationnel, pas un moteur de recherche.
+- Tu gardes le contexte de la conversation.
+- Tu reformules si l'élève dit qu'il n'a pas compris.`;
+
+interface GeminiMessage {
+  role: "user" | "model";
+  parts: { text: string }[];
+}
+
+export function buildGeminiMessages(
+  conversationHistory: Message[],
+  userMessage: string
+): GeminiMessage[] {
+  const messages: GeminiMessage[] = [];
+  const recentHistory = conversationHistory.slice(-20);
+
+  for (const msg of recentHistory) {
+    messages.push({
+      role: msg.role === "user" ? "user" : "model",
+      parts: [{ text: msg.content }],
+    });
+  }
+
+  messages.push({
+    role: "user",
+    parts: [{ text: userMessage }],
+  });
+
+  return messages;
+}
+
+export function getSystemPrompt(ctx: AIContext): string {
+  let prompt = SYSTEM_PROMPT;
+  if (ctx.currentExperiment) {
+    prompt += `\n\nEXPÉRIENCE ACTIVE : ${ctx.currentExperiment}`;
+    if (ctx.simulationParams) {
+      prompt += `\nParamètres : ${JSON.stringify(ctx.simulationParams)}`;
+    }
+  }
+  if (ctx.learningMode === "help") {
+    prompt += `\n\nMODE AIDE-MOI : L'élève veut des indices progressifs. Ne donne pas la réponse directement. Commence par un indice, puis laisse-le chercher.`;
+  }
+  return prompt;
 }

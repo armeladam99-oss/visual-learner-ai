@@ -24,10 +24,15 @@ import {
   MessageCircle,
   Image as ImageIcon,
   X,
+  Loader2,
 } from "lucide-react";
+import { useAction } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   processMessage,
   createInitialContext,
+  buildGeminiMessages,
+  type AIMode,
   type AIContext,
   type Message,
 } from "@/lib/ai-engine";
@@ -442,31 +447,102 @@ export default function LaboPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ctx.conversationHistory]);
 
-  const handleSend = useCallback((text?: string) => {
+  const chatAction = useAction(api.aiChat.chat);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = useCallback(async (text?: string) => {
     const query = text || input.trim();
-    if (!query) return;
+    if (!query || isLoading) return;
 
     const userMsg: Message = { role: "user", content: query, timestamp: new Date() };
-    const result = processMessage(query, ctx);
 
-    const assistantMsg: Message = {
-      role: "assistant",
-      content: result.response,
-      timestamp: new Date(),
-      experiment: result.experiment || undefined,
-      hints: result.hints,
-    };
-
+    // Add user message immediately
     setCtx((prev) => ({
       ...prev,
-      conversationHistory: [...prev.conversationHistory, userMsg, assistantMsg],
-      learningMode: learningMode,
-      currentMode: result.mode,
+      conversationHistory: [...prev.conversationHistory, userMsg],
     }));
-
-    if (result.experiment) setActiveExperiment(result.experiment);
     setInput("");
-  }, [input, ctx, learningMode]);
+    setIsLoading(true);
+
+    // Try local engine first for fast-path (experiments, short responses)
+    const localResult = processMessage(query, ctx);
+
+    // If local engine found a specific match (education, experiment), use it directly
+    const hasLocalMatch = localResult.experiment || (
+      localResult.mode === "education" && 
+      localResult.response.length > 50
+    );
+
+    if (hasLocalMatch) {
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: localResult.response,
+        timestamp: new Date(),
+        experiment: localResult.experiment || undefined,
+        hints: localResult.hints,
+      };
+      setCtx((prev) => ({
+        ...prev,
+        conversationHistory: [...prev.conversationHistory, assistantMsg],
+        learningMode: learningMode,
+        currentMode: localResult.mode,
+      }));
+      if (localResult.experiment) setActiveExperiment(localResult.experiment);
+      setIsLoading(false);
+      return;
+    }
+
+    // Otherwise, call the real LLM via Convex action
+    try {
+      const systemPrompt = `Tu es l'assistant scientifique de ProfVisuel, une application éducative pour les élèves de 2e année Bac au Maroc. Tu peux discuter de tout : cours, musique, jeux, sport, technologie, vie quotidienne. Tu es amical, patient et conversationnel. Tu parles en français.`;
+
+      const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
+
+      const result = await chatAction({
+        messages: geminiMessages,
+        systemPrompt,
+      });
+
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: result.response,
+        timestamp: new Date(),
+        hints: [],
+      };
+
+      setCtx((prev) => ({
+        ...prev,
+        conversationHistory: [...prev.conversationHistory, assistantMsg],
+        learningMode: learningMode,
+        currentMode: detectModeFromMessage(query),
+      }));
+    } catch (err) {
+      // Fallback to local engine if LLM fails
+      const fallbackMsg: Message = {
+        role: "assistant",
+        content: localResult.response,
+        timestamp: new Date(),
+        hints: localResult.hints,
+      };
+      setCtx((prev) => ({
+        ...prev,
+        conversationHistory: [...prev.conversationHistory, fallbackMsg],
+        learningMode: learningMode,
+        currentMode: localResult.mode,
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [input, ctx, learningMode, chatAction, isLoading]);
+
+  function detectModeFromMessage(msg: string): AIMode {
+    const lower = msg.toLowerCase();
+    if (lower.includes("photo") || lower.includes("image")) return "image";
+    if (lower.includes("exercice") || lower.includes("résous")) return "exercise";
+    if (lower.includes("circuit") || lower.includes("dosage") || lower.includes("simulation")) return "lab";
+    if (lower.includes("explique") || lower.includes("cours") || lower.includes("dérivée")) return "education";
+    return "general";
+  }
 
   const handlePhotoUpload = () => {
     fileInputRef.current?.click();
@@ -559,6 +635,19 @@ export default function LaboPage() {
         {messages.length > 0 && (
           <div className="space-y-4">
             {messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)}
+            {isLoading && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 max-w-3xl">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                  <Atom className="size-3.5 text-white" />
+                </div>
+                <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="size-3.5 text-cyan-400 animate-spin" />
+                    <span className="text-xs text-slate-400">Réflexion...</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -588,8 +677,8 @@ export default function LaboPage() {
               className="min-h-[44px] text-sm resize-none bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             />
-            <Button onClick={() => handleSend()} disabled={!input.trim()} className="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500">
-              <Send className="size-4" />
+            <Button onClick={() => handleSend()} disabled={!input.trim() || isLoading} className="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500">
+              {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
             </Button>
           </div>
           <div className="flex flex-wrap gap-1.5">
