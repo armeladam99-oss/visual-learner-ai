@@ -13,8 +13,11 @@ import "./index.css";
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const CoursPage = lazy(() => import("./pages/Cours.tsx"));
+const LaboPage = lazy(() => import("./pages/Labo.tsx"));
 const Lesson = lazy(() => import("./pages/Lesson.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+import { BottomNav } from "@/components/BottomNav";
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
@@ -123,13 +126,21 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/" element={<Landing />} />
               <Route
                 path="/auth"
-                element={<AuthPage redirectAfterAuth="/dashboard" />}
+                element={<AuthPage redirectAfterAuth="/cours" />}
               />
               <Route
-                path="/dashboard"
+                path="/cours"
                 element={
                   <RequireAuth>
-                    <Dashboard />
+                    <CoursPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/labo"
+                element={
+                  <RequireAuth>
+                    <LaboPage />
                   </RequireAuth>
                 }
               />
@@ -144,6 +155,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          <BottomNav />
         </BrowserRouter>
         <Toaster />
       </ConvexAuthProvider>
