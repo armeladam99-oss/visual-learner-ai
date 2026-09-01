@@ -1,0 +1,475 @@
+// ═══════════════════════════════════════════════════════════════
+// 🧠 MOTEUR IA PÉDAGOGIQUE — ProfVisuel
+// Architecture modulaire, extensible pour vrai LLM plus tard
+// ═══════════════════════════════════════════════════════════════
+
+export interface AIContext {
+  conversationHistory: Message[];
+  currentSubject: string | null;
+  currentExperiment: string | null;
+  simulationParams: Record<string, number> | null;
+  currentExercise: ExerciseData | null;
+  hintStep: number;
+  learningMode: "explain" | "help";
+  studentLevel: "2bac";
+  photos: PhotoAttachment[];
+}
+
+export interface Message {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  experiment?: string;
+  hints?: string[];
+  solution?: string;
+}
+
+export interface PhotoAttachment {
+  id: string;
+  name: string;
+  description: string;
+  analysis?: string;
+}
+
+export interface ExerciseData {
+  subject: string;
+  topic: string;
+  question: string;
+  steps: SolutionStep[];
+  finalAnswer: string;
+}
+
+export interface SolutionStep {
+  number: number;
+  label: string;
+  content: string;
+  formula?: string;
+}
+
+export interface ExperimentSuggestion {
+  name: string;
+  description: string;
+  query: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📚 BASE DE CONNAISSANCES
+// ═══════════════════════════════════════════════════════════════
+
+const knowledgeBase: Record<string, {
+  keywords: string[];
+  response: string;
+  experiment?: string;
+  suggestions?: string[];
+}> = {
+  // ─── MATHÉMATIQUES ───
+  limites: {
+    keywords: ["limite", "limites", "continuité", "continuité", "tend vers"],
+    response: `**Les limites** décrivent le comportement d'une fonction quand x tend vers une valeur.
+
+**Définition intuitive :**
+La limite de f(x) quand x → a est ℓ si f(x) se rapproche de ℓ quand x se rapproche de a.
+
+**Notation :** lim(x→a) f(x) = ℓ
+
+**Exemple :**
+lim(x→0) sin(x)/x = 1
+→ Même si f(0) n'est pas définie, la fonction tend vers 1.
+
+**Limites usuelles à connaître :**
+• lim(x→0) sin(x)/x = 1
+• lim(x→+∞) e^x = +∞
+• lim(x→+∞) 1/x = 0
+• lim(x→0) ln(x) = −∞
+
+**Règles :**
+• lim(f + g) = lim f + lim g
+• lim(f × g) = lim f × lim g
+• lim(f/g) = lim f / lim g (si le dénominateur ≠ 0)
+
+**Indéterminations courantes :**
+0/0, ∞/∞, 0×∞, ∞−∞, 1^∞, 0^0, ∞^0`,
+    experiment: "fonction",
+    suggestions: ["Montre-moi une fonction logarithme", "Explique-moi la continuité", "Résous un exercice de limites"],
+  },
+  derivation: {
+    keywords: ["dérivée", "derivée", "dérivation", "pente", "tangente", "variation", "extremum"],
+    response: `**La dérivée** d'une fonction en un point est la pente de la tangente à la courbe en ce point.
+
+**Définition :**
+f'(x₀) = lim(h→0) [f(x₀+h) − f(x₀)] / h
+
+**Interprétation géométrique :**
+• f'(x) > 0 → f est croissante en x
+• f'(x) < 0 → f est décroissante en x
+• f'(x) = 0 → extremum potentiel
+
+**Formules de dérivation essentielles :**
+• (xⁿ)' = n·xⁿ⁻¹
+• (eˣ)' = eˣ
+• (ln x)' = 1/x
+• (sin x)' = cos x
+• (cos x)' = −sin x
+• (u×v)' = u'×v + u×v'
+• (u∘v)' = v' × u'∘v
+
+**Étude de variations :**
+1. Calculer f'(x)
+2. Résoudre f'(x) = 0
+3. Construire le tableau de variations
+4. Identifier extremums et points d'inflexion`,
+    experiment: "fonction",
+    suggestions: ["Montre-moi une parabole avec sa dérivée", "Explique-moi les extrema", "Résous un exercice de dérivation"],
+  },
+  suite: {
+    keywords: ["suite", "suites", "suites numériques", "convergence", "fibonacci"],
+    response: `**Une suite numérique** est une application de ℕ dans ℝ.
+
+**Deux modes de génération :**
+• Explicite : uₙ = f(n)
+• Récurrence : uₙ₊₁ = f(uₙ)
+
+**Suites usuelles :**
+• Arithmétique : uₙ = u₀ + n×r
+• Géométrique : uₙ = u₀×qⁿ
+• Harmonique : uₙ = 1/(n+1)
+
+**Convergence :**
+• Suite arithmétique : convergente ⟺ r = 0
+• Suite géométrique : convergente ⟺ |q| < 1
+
+**Théorème des gendarmes :**
+Si aₙ ≤ uₙ ≤ bₙ et lim aₙ = lim bₙ = ℓ, alors lim uₙ = ℓ.
+
+**Borne supérieure :**
+Une suite croissante et majorée est convergente.`,
+    experiment: undefined,
+    suggestions: ["Montre-moi une suite arithmétique", "Montre-moi une suite géométrique", "Explique-moi Fibonacci"],
+  },
+  // ─── PHYSIQUE ───
+  circuit_rc: {
+    keywords: ["circuit rc", "condensateur", "charge", "décharge", "constante de temps", "résistance", "capacité"],
+    response: `**Circuit RC** = Résistance + Condensateur en série.
+
+**Constante de temps :** τ = R × C
+
+**Charge du condensateur :**
+• Uc(t) = U₀ × (1 − e^(−t/τ))
+• i(t) = (U₀/R) × e^(−t/τ)
+
+**Décharge :**
+• Uc(t) = U₀ × e^(−t/τ)
+• i(t) = −(U₀/R) × e^(−t/τ)
+
+**Points clés :**
+• À t = τ : le condensateur est chargé à 63%
+• À t = 3τ : chargé à 95%
+• À t = 5τ : chargé à 99%
+
+**Énergie stockée :**
+W = ½ × C × U²`,
+    experiment: "circuit",
+    suggestions: ["Lance la simulation circuit RC", "Pourquoi la charge est exponentielle ?", "Que se passe-t-il si on double R ?"],
+  },
+  projectile: {
+    keywords: ["projectile", "mouvement", "parabolique", "chute libre", "trajectoire"],
+    response: `**Mouvement parabolique** = projection dans un champ gravitationnel.
+
+**Décomposition :**
+• Horizontal : x(t) = v₀·cos(θ)·t (mouvement uniforme)
+• Vertical : y(t) = v₀·sin(θ)·t − ½gt² (MUV)
+
+**Portée :** R = v₀²·sin(2θ)/g
+**Hauteur max :** H = v₀²·sin²(θ)/(2g)
+**Temps de vol :** T = 2·v₀·sin(θ)/g
+
+**Angle optimal :** θ = 45° pour maximiser la portée.
+
+**Énergie :**
+• Au départ : Eₖ = ½mv₀²
+• En l'air : E = Eₖ + Eₚ = constante`,
+    experiment: "projectile",
+    suggestions: ["Lance la simulation projectile", "Pourquoi 45° est l'angle optimal ?", "Montre-moi le diagramme de forces"],
+  },
+  ondes: {
+    keywords: ["onde", "ondes", "fréquence", "longueur d'onde", "propagation"],
+    response: `**Une onde** transporte de l'énergie sans transport de matière.
+
+**Grandeurs :**
+• λ (lambda) : longueur d'onde (m)
+• f : fréquence (Hz)
+• T : période (s) = 1/f
+• v : vitesse de propagation (m/s)
+
+**Relation fondamentale :** v = λ × f
+
+**Onde progressive :**
+y(x,t) = A × sin(2π(x/λ − t/T))
+
+**Types d'ondes :**
+• Mécaniques : son, vagues, sismiques
+• Électromagnétiques : lumière, radio, micro-ondes
+
+**Phénomènes :**
+• Réflexion : rebond sur un obstacle
+• Réfraction : changement de milieu
+• Diffraction : déviation autour d'un obstacle
+• Interférence : superposition de deux ondes`,
+    experiment: "onde",
+    suggestions: ["Lance la simulation onde", "Explique-moi la diffraction", "Quelle est la différence entre son et lumière ?"],
+  },
+  // ─── CHIMIE ───
+  dosage: {
+    keywords: ["dosage", "ph", "acide", "base", "acido-basique", "titrage", "équivalence"],
+    response: `**Dosage acido-basique** : déterminer la concentration d'une solution inconnue.
+
+**Principe :** On verse une solution titrante (concentration connue) dans la solution à doser.
+
+**pH :** pH = −log[H₃O⁺]
+• pH < 7 : acide
+• pH = 7 : neutre
+• pH > 7 : basique
+
+**Point d'équivalence :** n_acide = n_base
+• Acide fort + Base forte : pH = 7
+• Acide faible + Base forte : pH > 7
+• Acide fort + Base faible : pH < 7
+
+**Formule :** C₁V₁ = C₂V₂
+
+**Courbe de titrage :**
+→ Zone plate (avant) → Montée brusque (équivalence) → Zone plate (après)`,
+    experiment: "dosage",
+    suggestions: ["Lance la simulation dosage", "Explique-moi le point d'équivalence", "Acide fort vs acide faible ?"],
+  },
+  moleculaire: {
+    keywords: ["molécule", "molécules", "liaison", "structure", "atome", "composé"],
+    response: `**Liaisons chimiques** = forces qui maintiennent les atomes ensemble.
+
+**3 types principaux :**
+• Ionique : transfert d'électrons (NaCl)
+• Covalente : partage d'électrons (H₂O, CO₂)
+• Métallique : bain d'électrons (Fe, Cu)
+
+**Géométrie des molécules :**
+• Linéaire : CO₂ (180°)
+• Coudée : H₂O (104,5°)
+• Tétrédrique : CH₄ (109,5°)
+• Trigone plane : BF₃ (120°)
+• Pyramidale : NH₃ (107,8°)
+
+**Règle de l'octet :**
+Chaque atome tend à avoir 8 électrons sur sa couche externe (2 pour H).`,
+    experiment: undefined,
+    suggestions: ["Montre-moi la molécule d'eau en 3D", "Quelle est la différence entre ionique et covalente ?", "Explique-moi la règle de l'octet"],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🔍 DÉTECTION DE LANGUE
+// ═══════════════════════════════════════════════════════════════
+
+function detectLanguage(text: string): "fr" | "ar" | "darija" | "en" {
+  const lower = text.toLowerCase();
+  if (/[\u0600-\u06FF]/.test(text)) return "ar";
+  const darijaWords = ["kif", "shno", "chno", "bghit", "bgha", "3lach", "kayn", "mashi", "daba", "safi", "wakil", "l3robi"];
+  if (darijaWords.some((w) => lower.includes(w))) return "darija";
+  if (/^(what|how|why|when|where|show|explain|help)/.test(lower)) return "en";
+  return "fr";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧪 SUGGESTIONS D'EXPÉRIENCES PAR THÈME
+// ═══════════════════════════════════════════════════════════════
+
+function getExperimentSuggestions(subject: string): ExperimentSuggestion[] {
+  const suggestions: Record<string, ExperimentSuggestion[]> = {
+    math: [
+      { name: "Explorateur de fonctions", description: "Visualise et modifie des courbes", query: "Montre-moi l'explorateur de fonctions" },
+      { name: "Parabole interactive", description: "Modifie a, b, c et observe", query: "Montre-moi une parabole" },
+      { name: "Suite numérique", description: "Visualise la convergence", query: "Montre-moi une suite" },
+    ],
+    physics: [
+      { name: "Circuit RC", description: "Charge et décharge", query: "Montre-moi un circuit RC" },
+      { name: "Projectile", description: "Simulation de trajectoire", query: "Lance un projectile" },
+      { name: "Onde progressive", description: "Visualise la propagation", query: "Montre-moi une onde" },
+      { name: "Oscillations", description: "Ressort-masse", query: "Montre-moi des oscillations" },
+    ],
+    chemistry: [
+      { name: "Dosage acido-basique", description: "Titration interactive", query: "Montre-moi un dosage" },
+      { name: "Structure moléculaire", description: "Vues 3D des molécules", query: "Montre-moi des molécules" },
+    ],
+  };
+  return suggestions[subject] || suggestions.math;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧩 DÉTECTION D'EXPÉRIENCE
+// ═══════════════════════════════════════════════════════════════
+
+function detectExperiment(query: string): string | undefined {
+  const q = query.toLowerCase();
+  if (q.includes("circuit") || q.includes("rc") || q.includes("condensateur") || q.includes("charge")) return "circuit";
+  if (q.includes("dosage") || q.includes("ph") || q.includes("acide") || q.includes("base") || q.includes("titrage")) return "dosage";
+  if (q.includes("fonction") || q.includes("graphique") || q.includes("courbe") || q.includes("parabole") || q.includes("quadratique") || q.includes("sinus") || q.includes("exponentielle") || q.includes("logarithme")) return "fonction";
+  if (q.includes("onde") || q.includes("propagation") || q.includes("fréquence")) return "onde";
+  if (q.includes("pendule") || q.includes("oscillation") || q.includes("ressort")) return "oscillation";
+  if (q.includes("molécule") || q.includes("molecule") || q.includes("structure")) return "molecule";
+  return undefined;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🔧 MOTEUR PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+
+export function processMessage(
+  userMessage: string,
+  ctx: AIContext
+): { response: string; experiment: string | undefined; hints: string[]; suggestions: string[] } {
+  const query = userMessage.trim();
+  const lower = query.toLowerCase();
+  const lang = detectLanguage(query);
+
+  // ─── MODE AIDE-MOI : indices progressifs ───
+  if (ctx.currentExercise && ctx.learningMode === "help") {
+    const step = ctx.hintStep;
+    const exercise = ctx.currentExercise;
+
+    if (lower.includes("indice") || lower.includes("hint") || lower.includes("aide")) {
+      const hints = [
+        `💡 Indice 1 : Regarde les données de l'exercice. Qu'est-ce qui te est donné ?`,
+        `💡 Indice 2 : Quelle formule pourrait s'appliquer ici ?`,
+        `💡 Indice 3 : Essaie de remplacer les valeurs dans la formule.`,
+        `✅ Voici la solution complète :\n\n${exercise.steps.map((s) => `**Étape ${s.number} — ${s.label} :** ${s.content}`).join("\n\n")}\n\n**Résultat :** ${exercise.finalAnswer}`,
+      ];
+
+      if (step < hints.length) {
+        ctx.hintStep++;
+        return {
+          response: hints[step],
+          experiment: undefined,
+          hints: hints.slice(step + 1).map((_, i) => i === 0 ? "➡️ Étape suivante" : "✅ Voir la solution"),
+          suggestions: ["Je comprends maintenant", "Donne-moi un autre indice", "Voir la solution complète"],
+        };
+      }
+    }
+
+    if (lower.includes("comprends") || lower.includes("suivant")) {
+      ctx.hintStep++;
+      if (ctx.hintStep < 4) {
+        const hints = [
+          `💡 Indice 1 : Regarde les données de l'exercice.`,
+          `💡 Indice 2 : Quelle formule pourrait s'appliquer ?`,
+          `💡 Indice 3 : Essaie de remplacer les valeurs.`,
+          `✅ Solution complète`,
+        ];
+        return {
+          response: hints[Math.min(ctx.hintStep, 3)],
+          experiment: undefined,
+          hints: [],
+          suggestions: ["Donne-moi un autre indice", "Je veux la solution"],
+        };
+      }
+    }
+  }
+
+  // ─── DÉTECTION D'EXPÉRIENCE ───
+  const experiment = detectExperiment(query);
+
+  // ─── RECHERCHE DANS LA BASE DE CONNAISSANCES ───
+  let bestMatch: string | null = null;
+  let bestScore = 0;
+
+  for (const [key, entry] of Object.entries(knowledgeBase)) {
+    let score = 0;
+    for (const keyword of entry.keywords) {
+      if (lower.includes(keyword)) {
+        score += keyword.length;
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = key;
+    }
+  }
+
+  // ─── RÉPONSES SPÉCIALES ───
+  if (lower.includes("pas compris") || lower.includes("pas compris") || lower.includes("j'ai pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
+    const reformulations = [
+      "Je vais t'expliquer autrement :\n\n",
+      "Pas de souci, voici une autre approche :\n\n",
+      "Compris, je reformule plus simplement :\n\n",
+    ];
+    const lastTopic = ctx.currentSubject || "math";
+    const reformulation = reformulations[Math.floor(Math.random() * reformulations.length)];
+    return {
+      response: `${reformulation}En termes simples, cette notion signifie que当我们observons le comportement d'une grandeur, on cherche à comprendre comment elle évolut.\n\nEssaie de me poser une question plus précise, et je t'expliquerai étape par étape. 💪`,
+      experiment: undefined,
+      hints: [],
+      suggestions: ["Explique-moi avec un exemple", "Montre-moi un graphique", "Donne-moi un exercice"],
+    };
+  }
+
+  if (lower.includes("exemple") || lower.includes("exercice")) {
+    return {
+      response: `**Exercice d'entraînement** 📝\n\nSoit f(x) = 2x² − 8x + 6\n\n1. Calculer Δ\n2. Trouver les racines\n3. Déterminer le sommet de la parabole\n4. Étudier le signe de f(x)\n\n**Données :** a = 2, b = −8, c = 6\n\nTu veux que je t'aide ou que je te donne la solution ?`,
+      experiment: experiment,
+      hints: ["Commence par calculer le discriminant", "Δ = b² − 4ac", "Ensuite, applique la formule des racines"],
+      suggestions: ["Aide-moi (mode indices)", "Donne-moi la solution complète", "Montre-moi le graphique"],
+    };
+  }
+
+  // ─── RÉPONSE BASE SUR CONNAISSANCES ───
+  if (bestMatch && bestScore > 0) {
+    const entry = knowledgeBase[bestMatch];
+    return {
+      response: entry.response,
+      experiment: experiment || entry.experiment || undefined,
+      hints: entry.suggestions || [],
+      suggestions: entry.suggestions || [],
+    };
+  }
+
+  // ─── RÉPONSE GÉNÉRIQUE ADAPTÉE ───
+  if (lang === "ar") {
+    return {
+      response: `أنا هنا لمساعدتك! 🎓\n\nيمكنني مساعدتك في:\n• 📐 الرياضيات: حدود، اشتقاق، تكامل، جبر\n• ⚛️ الفيزياء: دوائر، ميكانيك، أمواج، اهتزازات\n• 🧪 الكيمياء: تراكيز، تفاعلات، جزيئات\n\nحاول تطرح سؤال أكثر تحديداً أو اختر تجربة من القائمة!`,
+      experiment: undefined,
+      hints: [],
+      suggestions: ["شرح الم derived", "اختبار في الفيزياء", "تجربة في الكيمياء"],
+    };
+  }
+
+  return {
+    response: `Je suis ton assistant scientifique ! 🧪\n\nJe peux t'aider avec :\n• 📐 **Mathématiques** : limites, dérivation, suites, intégrales\n• ⚛️ **Physique** : circuits, mécanique, ondes, oscillations\n• 🧪 **Chimie** : dosages, réactions, molécules\n\nEssaie de me poser une question précise, ou choisis une expérience dans le labo !\n\n**Exemples de demandes :**\n• "Explique-moi les limites"\n• "Montre-moi un circuit RC"\n• "Montre-moi un dosage"\n• "Résous cet exercice"`,
+    experiment: undefined,
+    hints: [],
+    suggestions: ["Explique-moi les limites", "Montre-moi un circuit RC", "Montre-moi un dosage", "Explique-moi la dérivée"],
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📷 ANALYSE D'IMAGE (architecture prête pour vrai LLM)
+// ═══════════════════════════════════════════════════════════════
+
+export function analyzeImage(imageDescription: string): string {
+  return `🔎 **Analyse de l'image :**\n\nJ'ai identifié les éléments suivants dans ta photo :\n\n${imageDescription}\n\n**Interprétation :**\nIl semble s'agir d'un exercice/mathématique/physique.\n\nTu veux que je :\n1. Résolve l'exercice étape par étape ?\n2. T'explique les concepts utilisés ?\n3. Te montre un graphique correspondant ?\n\nDis-moi ce que tu préfères ! 👇`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎯 INITIALISATION DU CONTEXTE
+// ═══════════════════════════════════════════════════════════════
+
+export function createInitialContext(): AIContext {
+  return {
+    conversationHistory: [],
+    currentSubject: null,
+    currentExperiment: null,
+    simulationParams: null,
+    currentExercise: null,
+    hintStep: 0,
+    learningMode: "explain",
+    studentLevel: "2bac",
+    photos: [],
+  };
+}
