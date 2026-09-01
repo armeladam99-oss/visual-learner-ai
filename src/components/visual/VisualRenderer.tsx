@@ -4,6 +4,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { InteractiveGraph, GraphExplainer } from "./InteractiveGraph";
 import { SignGraph } from "./SignGraph";
+import { CircuitDiagram } from "./CircuitDiagram";
+import { FreeBodyDiagram } from "./FreeBodyDiagram";
+import { MolecularStructure } from "./MolecularStructure";
+import { LabEquipment } from "./LabEquipment";
+import { VectorDiagram } from "./VectorDiagram";
+import { WaveDiagram } from "./WaveDiagram";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface VisualRendererProps {
@@ -449,6 +455,70 @@ export function VisualRenderer({ variant, subject }: VisualRendererProps) {
               ]}
             />
           </>
+        )}
+
+        {subject === "physics" && variant === "circuit-series" && (
+          <CircuitDiagram variant="series" />
+        )}
+
+        {subject === "physics" && variant === "circuit-parallel" && (
+          <CircuitDiagram variant="parallel" />
+        )}
+
+        {subject === "physics" && variant === "forces-incline" && (
+          <FreeBodyDiagram variant="incline" />
+        )}
+
+        {subject === "physics" && variant === "forces-fall" && (
+          <FreeBodyDiagram variant="fall" />
+        )}
+
+        {subject === "physics" && variant === "forces-horizontal" && (
+          <FreeBodyDiagram variant="horizontal" />
+        )}
+
+        {subject === "physics" && variant === "vectors" && (
+          <VectorDiagram variant="addition" />
+        )}
+
+        {subject === "physics" && variant === "decomposition" && (
+          <VectorDiagram variant="decomposition" />
+        )}
+
+        {subject === "physics" && variant === "wave-progressive" && (
+          <WaveDiagram variant="progressive" />
+        )}
+
+        {subject === "physics" && variant === "wave-stationary" && (
+          <WaveDiagram variant="stationary" />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-water" && (
+          <MolecularStructure molecule="water" />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-hcl" && (
+          <MolecularStructure molecule="hcl" />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-nacl" && (
+          <MolecularStructure molecule="nacl" />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-co2" && (
+          <MolecularStructure molecule="co2" />
+        )}
+
+        {subject === "chemistry" && variant === "lab-titration" && (
+          <LabEquipment variant="titration" />
+        )}
+
+        {subject === "chemistry" && variant === "lab-beaker" && (
+          <LabEquipment variant="beaker" />
+        )}
+
+        {subject === "chemistry" && variant === "lab-ph" && (
+          <LabEquipment variant="ph-meter" />
         )}
       </motion.div>
     </AnimatePresence>

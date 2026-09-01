@@ -4,7 +4,7 @@ import { InteractiveGraph, GraphExplainer } from "@/components/visual/Interactiv
 import { FormulaCard, ConceptCard, MethodCard, ExampleStep } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -137,7 +137,7 @@ export function getMathDerivationSections(): LessonSection[] {
         ))}
       </div>
     )},
-    { id: "ask-ai", type: "ask-ai", title: "Demander au Prof IA", icon: "🤖", content: <AITutorPanel subject="Maths — Dérivation" /> },
+    { id: "ask-ai", type: "ask-ai", title: "Demander au Prof IA", icon: "🤖", content: <ProfessionalAITutor subject="Maths — Dérivation" subjectKey="math" /> },
     { id: "draw-me", type: "draw-me", title: "Dessine-moi", icon: "✏️", content: <DrawMePanel subject="math" options={[{ label: "Courbe et sa dérivée", icon: "📈", description: "Superpose f(x) et f'(x)", variant: "parabole" }, { label: "Évolution de la pente", icon: "📐", description: "Montre comment f'(x) varie", variant: "pente" }]} /> },
     { id: "mini-test", type: "mini-test", title: "Mini-test", icon: "🧪", content: (
       <MiniTest questions={[

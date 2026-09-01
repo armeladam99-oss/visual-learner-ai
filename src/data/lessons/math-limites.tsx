@@ -10,7 +10,7 @@ import {
 } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -420,7 +420,7 @@ export function getMathLimitesSections(): LessonSection[] {
       type: "ask-ai",
       title: "Demander au Prof IA",
       icon: "🤖",
-      content: <AITutorPanel subject="Mathématiques — Limites" />,
+      content: <ProfessionalAITutor subject="Mathématiques — Limites" subjectKey="math" />,
     },
     {
       id: "draw-me",

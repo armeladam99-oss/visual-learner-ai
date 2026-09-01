@@ -10,7 +10,7 @@ import {
 } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -478,7 +478,7 @@ export function getPhysicsCinematiqueSections(): LessonSection[] {
       type: "ask-ai",
       title: "Demander au Prof IA",
       icon: "🤖",
-      content: <AITutorPanel subject="Physique-Chimie" />,
+      content: <ProfessionalAITutor subject="Physique-Chimie" subjectKey="physics" />,
     },
 
     {
@@ -492,6 +492,14 @@ export function getPhysicsCinematiqueSections(): LessonSection[] {
           options={[
             { label: "Comparaison MRU / MUV (x)", icon: "📈", description: "Superpose x(t) des deux mouvements", variant: "mruvs-muv" },
             { label: "Comparaison MRU / MUV (v)", icon: "🚀", description: "Montre v(t) côte à côte", variant: "mruvs-muv-v" },
+            { label: "Circuit série", icon: "⚡", description: "Schéma interactif avec curseurs", variant: "circuit-series" },
+            { label: "Circuit parallèle", icon: "🔌", description: "Deux branches en parallèle", variant: "circuit-parallel" },
+            { label: "Diagramme de forces (plan incliné)", icon: "🎯", description: "Corps isolé sur plan incliné", variant: "forces-incline" },
+            { label: "Chute libre", icon: "🍎", description: "Poids et résistance de l'air", variant: "forces-fall" },
+            { label: "Addition de vecteurs", icon: "📐", description: "Règle du parallélogramme", variant: "vectors" },
+            { label: "Décomposition vectorielle", icon: "📏", description: "Composantes Fx et Fy", variant: "decomposition" },
+            { label: "Onde progressive", icon: "🌊", description: "Amplitude, fréquence, λ", variant: "wave-progressive" },
+            { label: "Onde stationnaire", icon: "〰️", description: "Nœuds et ventres", variant: "wave-stationary" },
           ]}
         />
       ),

@@ -10,7 +10,7 @@ import {
 } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -379,7 +379,7 @@ export function getChemistrySolutionsSections(): LessonSection[] {
       type: "ask-ai",
       title: "Demander au Prof IA",
       icon: "🤖",
-      content: <AITutorPanel subject="Chimie" />,
+      content: <ProfessionalAITutor subject="Chimie" subjectKey="chemistry" />,
     },
 
     {
@@ -393,6 +393,13 @@ export function getChemistrySolutionsSections(): LessonSection[] {
           options={[
             { label: "Courbe de dosage", icon: "⚗️", description: "pH en fonction du volume", variant: "dosage" },
             { label: "Courbe de dilution", icon: "💧", description: "Concentration vs volume", variant: "dilution" },
+            { label: "Manipulation dosage", icon: "🔬", description: "Burette interactive avec gouttes", variant: "lab-titration" },
+            { label: "Structure H₂O", icon: "⚛️", description: "Molécule d'eau interactive", variant: "molecule-water" },
+            { label: "Structure HCl", icon: "⚛️", description: "Acide chlorhydrique", variant: "molecule-hcl" },
+            { label: "Structure NaCl", icon: "⚛️", description: "Chlorure de sodium", variant: "molecule-nacl" },
+            { label: "Structure CO₂", icon: "⚛️", description: "Dioxyde de carbone", variant: "molecule-co2" },
+            { label: "Fiole graduée", icon: "🧪", description: "Matériel de laboratoire", variant: "lab-beaker" },
+            { label: "pH-mètre", icon: "🧪", description: "Instrument de mesure du pH", variant: "lab-ph" },
           ]}
         />
       ),

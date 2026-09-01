@@ -4,7 +4,7 @@ import { InteractiveGraph, GraphExplainer } from "@/components/visual/Interactiv
 import { FormulaCard, ConceptCard, MethodCard, ExampleStep } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -60,7 +60,7 @@ export function getMathExpoSections(): LessonSection[] {
     { id: "hard-example", type: "hard-example", title: "Exemple difficile", icon: "🔥", content: <Card className="border-accent/30 bg-accent/[0.03]"><CardContent className="p-4"><p className="text-sm font-medium text-foreground">🔥 Résoudre e²ˣ − 3eˣ + 2 = 0</p><p className="text-sm text-muted-foreground mt-2">Substitution : posons t = eˣ (t &gt; 0). On obtient t² − 3t + 2 = 0 = (t−1)(t−2). Donc t = 1 ou t = 2. x = ln(1) = 0 ou x = ln(2).</p></CardContent></Card> },
     { id: "common-mistakes", type: "common-mistakes", title: "Erreurs fréquentes", icon: "⚠️", content: <div className="space-y-3">{[{ mistake: "Croire que eˣ peut être négatif", fix: "eˣ > 0 pour tout x réel. Jamais nul, jamais négatif." }, { mistake: "Oublier que ln(a) n'existe que si a > 0", fix: "On ne peut pas prendre ln de 0 ou d'un négatif." }].map((item, i) => <Card key={i} className="border-red-100 bg-red-50/30 py-3"><CardContent className="px-4 space-y-1"><p className="text-sm font-medium text-red-700 flex items-center gap-2"><span className="text-red-500">✗</span> {item.mistake}</p><p className="text-xs text-red-600/80 flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span> {item.fix}</p></CardContent></Card>)}</div> },
     { id: "exercises", type: "exercises", title: "Exercices progressifs", icon: "📝", content: <div className="space-y-4">{[{ level: "Fondamental", questions: ["Calculer e⁰, e¹, e⁻¹", "Résoudre eˣ = 10"] }, { level: "Intermédiaire", questions: ["Résoudre e²ˣ − 5eˣ + 6 = 0", "Étudier les variations de f(x) = eˣ − x²"] }].map((g, gi) => <Card key={gi} className="border-border/50 bg-card py-4"><CardContent className="px-5 space-y-3"><Badge variant="secondary">{g.level}</Badge><ol className="space-y-2 text-sm text-muted-foreground">{g.questions.map((q, qi) => <li key={qi} className="flex gap-2"><span className="font-mono text-xs text-muted-foreground/60">{gi+1}.{qi+1}</span>{q}</li>)}</ol></CardContent></Card>)}</div> },
-    { id: "ask-ai", type: "ask-ai", title: "Demander au Prof IA", icon: "🤖", content: <AITutorPanel subject="Maths — Exponentielle" /> },
+    { id: "ask-ai", type: "ask-ai", title: "Demander au Prof IA", icon: "🤖", content: <ProfessionalAITutor subject="Maths — Exponentielle" subjectKey="math" /> },
     { id: "draw-me", type: "draw-me", title: "Dessine-moi", icon: "✏️", content: <DrawMePanel subject="math" options={[{ label: "Courbe eᵏˣ", icon: "📈", description: "Observe l'effet de k", variant: "parabole" }, { label: "Comparaison avec x²", icon: "📊", description: "eˣ croît plus vite que x²", variant: "comparaison" }]} /> },
     { id: "mini-test", type: "mini-test", title: "Mini-test", icon: "🧪", content: <MiniTest questions={[
       { question: "eˣ est toujours :", options: ["Positive", "Négative", "Nulle en x=0", "Nulle en x=1"], correctIndex: 0, explanation: "eˣ > 0 pour tout x réel. C'est toujours positif." },

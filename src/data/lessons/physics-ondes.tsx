@@ -10,7 +10,7 @@ import {
 } from "@/components/visual/FormulaCard";
 import { MiniTest } from "@/components/visual/MiniTest";
 import { DrawMePanel } from "@/components/visual/DrawMePanel";
-import { AITutorPanel } from "@/components/visual/AITutorPanel";
+import { ProfessionalAITutor } from "@/components/visual/ProfessionalAITutor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -442,7 +442,7 @@ export function getPhysicsOndesSections(): LessonSection[] {
       type: "ask-ai",
       title: "Demander au Prof IA",
       icon: "🤖",
-      content: <AITutorPanel subject="Physique — Ondes" />,
+      content: <ProfessionalAITutor subject="Physique — Ondes" subjectKey="physics" />,
     },
     {
       id: "draw-me",
