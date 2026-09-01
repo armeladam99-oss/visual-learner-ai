@@ -32,6 +32,7 @@ import {
   processMessage,
   createInitialContext,
   buildGeminiMessages,
+  getSystemPrompt,
   type AIMode,
   type AIContext,
   type Message,
@@ -464,38 +465,57 @@ export default function LaboPage() {
     setInput("");
     setIsLoading(true);
 
-    // Try local engine first for fast-path (experiments, short responses)
+    // ─── STEP 1: Check if this should be handled locally ───
     const localResult = processMessage(query, ctx);
+    const lower = query.toLowerCase();
 
-    // If local engine found a specific match (education, experiment), use it directly
-    const hasLocalMatch = localResult.experiment || (
-      localResult.mode === "education" && 
-      localResult.response.length > 50
-    );
+    // Local engine handles: experiments, hint mode, and education quick-matches
+    const isExperimentTrigger = !!localResult.experiment;
+    const isHintMode = ctx.currentExercise && ctx.learningMode === "help" && 
+      (lower.includes("indice") || lower.includes("hint") || lower.includes("aide") || lower.includes("comprends") || lower.includes("suivant"));
+    const isEducationQuickMatch = localResult.mode === "education" && 
+      localResult.response.length > 100 && !isExperimentTrigger;
 
-    if (hasLocalMatch) {
+    if (isHintMode) {
+      // Hint system must stay local
       const assistantMsg: Message = {
         role: "assistant",
         content: localResult.response,
         timestamp: new Date(),
-        experiment: localResult.experiment || undefined,
         hints: localResult.hints,
       };
       setCtx((prev) => ({
         ...prev,
         conversationHistory: [...prev.conversationHistory, assistantMsg],
         learningMode: learningMode,
-        currentMode: localResult.mode,
+        currentMode: "exercise",
+      }));
+      setIsLoading(false);
+      return;
+    }
+
+    if (isExperimentTrigger) {
+      // Experiment triggers use local + activate simulation
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: localResult.response,
+        timestamp: new Date(),
+        experiment: localResult.experiment || undefined,
+      };
+      setCtx((prev) => ({
+        ...prev,
+        conversationHistory: [...prev.conversationHistory, assistantMsg],
+        learningMode: learningMode,
+        currentMode: "lab",
       }));
       if (localResult.experiment) setActiveExperiment(localResult.experiment);
       setIsLoading(false);
       return;
     }
 
-    // Otherwise, call the real LLM via Convex action
+    // ─── STEP 2: Everything else goes to Gemini ───
     try {
-      const systemPrompt = `Tu es l'assistant scientifique de ProfVisuel, une application éducative pour les élèves de 2e année Bac au Maroc. Tu peux discuter de tout : cours, musique, jeux, sport, technologie, vie quotidienne. Tu es amical, patient et conversationnel. Tu parles en français.`;
-
+      const systemPrompt = getSystemPrompt(ctx);
       const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
 
       const result = await chatAction({
@@ -517,7 +537,7 @@ export default function LaboPage() {
         currentMode: detectModeFromMessage(query),
       }));
     } catch (err) {
-      // Fallback to local engine if LLM fails
+      // Fallback to local engine if Gemini fails
       const fallbackMsg: Message = {
         role: "assistant",
         content: localResult.response,
