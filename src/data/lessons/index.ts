@@ -2,6 +2,7 @@ import type { LessonSection } from "@/types/lessons";
 import { getMathLimitesSections } from "./math-limites";
 import { getMathDerivationSections } from "./math-derivation";
 import { getMathSuitesSections } from "./math-suites";
+import { getSuitesNumeriquesV2 } from "@/data/courses/math-suites-v2";
 import { getMathExpoSections } from "./math-exponentielle";
 import { getPhysicsOndesSections } from "./physics-ondes";
 import { getPhysicsOndesPeriodiquesSections } from "./physics-ondes-periodiques";
@@ -17,7 +18,7 @@ export function getLessonSections(chapterId: string): LessonSection[] {
     case "derivation-fonctions":
       return getMathDerivationSections();
     case "suites-numeriques":
-      return getMathSuitesSections();
+      return getSuitesNumeriquesV2();
     case "fonction-exponentielle":
       return getMathExpoSections();
     case "ondes-mecaniques":

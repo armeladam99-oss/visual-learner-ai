@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Clock, ChevronRight, GraduationCap, BookOpen } from "lucide-react";
-import { chapters, subjectLabels, subjectColors } from "@/data/chapters";
+import { chapters as oldChapters, subjectLabels, subjectColors } from "@/data/chapters";
+import { chaptersV2 } from "@/data/chapters-v2";
+const chapters = chaptersV2;
 import { getLessonSections } from "@/data/lessons";
 import { useState } from "react";
 
