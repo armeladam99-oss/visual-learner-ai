@@ -3,6 +3,8 @@
 // Architecture modulaire, extensible pour vrai LLM plus tard
 // ═══════════════════════════════════════════════════════════════
 
+export type AIMode = "education" | "general" | "lab" | "image" | "exercise";
+
 export interface AIContext {
   conversationHistory: Message[];
   currentSubject: string | null;
@@ -13,6 +15,7 @@ export interface AIContext {
   learningMode: "explain" | "help";
   studentLevel: "2bac";
   photos: PhotoAttachment[];
+  currentMode: AIMode;
 }
 
 export interface Message {
@@ -393,6 +396,29 @@ export function processMessage(
     }
   }
 
+  // ─── MODE GÉNÉRAL : DISCUSSION LIBRE ───
+  const generalTopics = [
+    { keywords: ["salut", "bonjour", "bonsoir", "coucou", "hey", "hello", "ça va", "ca va", "comment ça va", "comment vas-tu", "ça roule"], response: `Salut ! 😊 Comment ça va ?\n\nJe suis ton assistant scientifique, mais je suis aussi là pour discuter de tout ce que tu veux. Tu veux qu'on parle de quelque chose en particulier ?` },
+    { keywords: ["minecraft", "jeux", "jeu", "gaming", "playstation", "xbox", "nintendo", "fortnite", "valorant", "lol", "league of legends", "fifa", "rocket league"], response: `Minecraft ! 🎮 Un classique !\n\nLe jeu de construction et de survie par Mojang (racheté par Microsoft en 2014). Tu peux construire des maisons, explorer des cavernes, affronter des monstres...\n\nEt savais-tu que Minecraft utilise des algorithmes de **génération procédurale** pour créer les mondes ? C'est un peu comme des maths appliquées au divertissement ! 🧮\n\nTu veux qu'on parle d'autre chose, ou tu as une question de cours ?` },
+    { keywords: ["musique", "chanson", "concert", "spotify", "rap", "pop", "rock", "drill", "afro", "melanie", "booba", "damso", "navy", "gazo"], response: `La musique, c'est super ! 🎵\n\nTu écoutes quoi en ce moment ? Moi je trouve ça fascinant comment les ondes sonores créent de la musique — c'est de la physique pure ! Les fréquences, les harmoniques, le rythme...\n\nSi tu veux, je peux t'expliquer la physique du son, ou on peut juste discuter de musique. Comme tu veux ! 😊` },
+    { keywords: ["film", "films", "série", "séries", "netflix", "disney", "anime", "naruto", "one piece", "jujutsu", "demon slayer"], response: `Ah les séries et films ! 🎬\n\nC'est un bon sujet. Tu regardes quoi en ce moment ? Les animes c'est pas mal aussi — il y a beaucoup de science dedans si tu y prêtes attention !\n\nTu veux continuer à discuter ou tu as un cours à réviser ?` },
+    { keywords: ["sport", "football", "basketball", "basket", "f1", "formula 1", "mma", "boxe", "tennis", "atletico", "real madrid", "barcelona", "psg", "inter", "juventus"], response: `Le sport ! ⚽🏀\n\nC'est un domaine où la physique est très présente — les trajectoires, la vitesse, l'énergie cinétique...\n\nTu suis quel sport ? Et si tu veux, je peux t'expliquer la physique derrière un tir au but, un dunk, ou un virage en F1 ! 😊` },
+    { keywords: ["techno", "technologie", "tech", "iphone", "samsung", "ai", "intelligence artificielle", "robot", "spacex", "tesla", "google"], response: `La technologie, c'est passionnant ! 🚀\n\nTu t'intéresses à quoi ? L'IA, la space, les phones, les voitures électriques ?\n\nC'est marrant parce que derrière toute la tech, il y a des maths et de la physique — des circuits, des algorithmes, des ondes électromagnétiques...\n\nTu veux qu'on parle tech ou tu as un cours ?` },
+    { keywords: ["voyage", "voyager", "pays", "maroc", "france", "dubai", "japon", "travel"], response: `Les voyages, c'est génial ! ✈️🌍\n\nTu veux aller où ? Le Maroc a des trucs incroyables — l'Atlas, le Sahara, les riads de Fès...\n\nEt savais-tu que la navigation utilise des calculs mathématiques complexes ? Les coordonnées GPS, les fuseaux horaires, la cartographie...\n\nOn continue à discuter ou tu veux réviser ?` },
+    { keywords: ["humour", "blague", "drôle", "rire", "meme", "mème"], response: `Tu veux une blague ? 😄\n\nPourquoi les maths sont tristes ?\nParce qu'elles ont trop de problèmes ! 😂\n\nBon, sur ce, tu veux qu'on passe à un sujet plus sérieux ou on continue à rigoler ?` },
+    { keywords: ["merci", "thanks", "super", "génial", "bravo", "parfait", "excellent"], response: `Merci à toi ! 😊\n\nN'hésite pas si tu as d'autres questions, que ce soit de cours ou autre chose. Je suis là ! 💪` },
+    { keywords: ["qui es-tu", "qui es tu", "t'es qui", "tu es qui", "présentation", "présente-toi", "c'est quoi ton nom", "comment tu t'appelles", "ton nom"], response: `Je suis ton **assistant scientifique IA** ! 🧪\n\nMon rôle est de t'aider dans tes révisions, t'expliquer les cours, te montrer des expériences, et répondre à tes questions — que ce soit scolaires ou non !\n\nJe connais les cours de 2e BAC marocain en maths, physique et chimie. Mais je peux aussi discuter de musique, de jeux, de films... de tout ce que tu veux ! 😊\n\nComment je peux t'aider ?` },
+    { keywords: ["âge", "age", "t'es vieux", "t'es jeune", "tu es un humain", "t'es un robot", "es-tu un robot", "t'es une ia", "t'es une intelligence", "tu es une ia", "es tu humain", "tu es humain"], response: `Je suis une intelligence artificielle ! 🤖\n\nJe ne suis pas humain, mais je suis là pour t'aider du mieux possible. Je peux te parler de n'importe quoi — cours, sport, musique, technologie...\n\nEt si tu as besoin d'aide pour réviser, je suis ton meilleur allié ! 💪` },
+    { keywords: ["dormir", "fatigué", "fatigue", "coupé", "las", "lassée", "je suis crevé", "fatigant", " ennuyeux", "ennui", "chiant", "chiant", "saoule", "saoul", "marre", "lourd"], response: `Je comprends, ça arrive d'être fatigué ou ennuyé ! 😅\n\nTu veux qu'on fasse quelque chose de plus interactif ? Je peux te monter une simulation dans le labo, ou on peut discuter de quelque chose qui t'intéresse vraiment.\n\nSinon, prends une pause — réviser c'est important mais le repos aussi ! 💤` },
+  ];
+
+  // Vérifier si c'est un sujet général
+  for (const topic of generalTopics) {
+    if (topic.keywords.some((kw) => lower.includes(kw))) {
+      return { response: topic.response, experiment: undefined, hints: [], suggestions: [] };
+    }
+  }
+
   // ─── RÉPONSES SPÉCIALES ───
   if (lower.includes("pas compris") || lower.includes("pas compris") || lower.includes("j'ai pas compris") || lower.includes("reformule") || lower.includes("autrement")) {
     const reformulations = [
@@ -471,5 +497,6 @@ export function createInitialContext(): AIContext {
     learningMode: "explain",
     studentLevel: "2bac",
     photos: [],
+    currentMode: "general",
   };
 }
