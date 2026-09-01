@@ -145,6 +145,23 @@ export function getMathDerivationSections(): LessonSection[] {
         { question: "Si f'(x₀) > 0, alors en x₀, f est :", options: ["Décroissante", "Croissante", "Constante", "Non définie"], correctIndex: 1, explanation: "f'(x₀) > 0 signifie que la pente est positive → f est croissante." },
       ]} />
     )},
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• f'(x) = pente de la tangente = taux d'accroissement</li><li>• f' &gt; 0 → croissante, f' &lt; 0 → décroissante, f' = 0 → extremum</li><li>• Tableau de signe de f' → tableau de variations de f</li><li>• Les dérivées usuelles sont essentielles à connaître</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: (
       <div className="space-y-3">

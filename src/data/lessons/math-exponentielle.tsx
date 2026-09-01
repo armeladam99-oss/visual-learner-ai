@@ -66,6 +66,23 @@ export function getMathExpoSections(): LessonSection[] {
       { question: "eˣ est toujours :", options: ["Positive", "Négative", "Nulle en x=0", "Nulle en x=1"], correctIndex: 0, explanation: "eˣ > 0 pour tout x réel. C'est toujours positif." },
       { question: "Résoudre eˣ = 1 :", options: ["x = 0", "x = 1", "x = e", "Pas de solution"], correctIndex: 0, explanation: "e⁰ = 1. Donc x = 0." },
     ]} /> },
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• eˣ &gt; 0 toujours, passe par (0 ; 1)</li><li>• (eˣ)&apos; = eˣ — sa propre dérivée</li><li>• eˣ × eʸ = eˣ⁺ʸ</li><li>• eˣ = a ⟹ x = ln(a) (si a &gt; 0)</li><li>• eˣ croît plus vite que tout polynôme en +∞</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: <div className="space-y-3">{[{ topic: "Nombres complexes", description: "Exponentielle des complexes : eⁱᶿ = cos θ + i sin θ.", icon: "🔢" }, { topic: "Équations différentielles", description: "L'exponentielle résout y' = ky.", icon: "📐" }].map((item, i) => <Card key={i} className="border-border/50 bg-card py-3 hover:border-primary/20 transition-colors"><CardContent className="flex items-start gap-3 px-4"><span className="text-xl">{item.icon}</span><div><p className="text-sm font-semibold text-foreground">{item.topic}</p><p className="text-xs text-muted-foreground mt-0.5">{item.description}</p></div></CardContent></Card>)}</div> },
   ];

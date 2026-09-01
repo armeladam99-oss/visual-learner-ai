@@ -73,6 +73,23 @@ export function getChimieAcidoSections(): LessonSection[] {
       { question: "pH = −log[H₃O⁺]. Si [H₃O⁺] = 0,001 mol/L, pH = ?", options: ["1", "2", "3", "4"], correctIndex: 2, explanation: "pH = −log(10⁻³) = 3." },
       { question: "Au point d'équivalence d'un dosage HCl/NaOH :", options: ["pH < 7", "pH = 7", "pH > 7", "pH = 14"], correctIndex: 1, explanation: "HCl (acide fort) + NaOH (base forte) → pH = 7 au point d'équivalence." },
     ]} /> },
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• pH = −log[H₃O⁺] ; pH &lt; 7 acide, = 7 neutre, &gt; 7 basique</li><li>• Dosage : C₁V₁ = C₂V₂ (stœchiométrie)</li><li>• Point d&apos;équivalence : n_acide = n_base</li><li>• Courbe de titrage : zone de brusque variation au point équivalence</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: <div className="space-y-3">{[{ topic: "Suivi temporel", description: "Cinétique chimique et vitesse de réaction.", icon: "⏱️" }, { topic: "Transformations nucléaires", description: "Radioactivité et énergie nucléaire.", icon: "☢️" }].map((item, i) => <Card key={i} className="border-border/50 bg-card py-3 hover:border-primary/20 transition-colors"><CardContent className="flex items-start gap-3 px-4"><span className="text-xl">{item.icon}</span><div><p className="text-sm font-semibold text-foreground">{item.topic}</p><p className="text-xs text-muted-foreground mt-0.5">{item.description}</p></div></CardContent></Card>)}</div> },
   ];

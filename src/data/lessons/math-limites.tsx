@@ -467,6 +467,24 @@ export function getMathLimitesSections(): LessonSection[] {
         />
       ),
     },
+
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     {
       id: "summary",
       type: "summary",

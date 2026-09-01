@@ -69,6 +69,23 @@ export function getMathSuitesSections(): LessonSection[] {
       { question: "Suite géométrique de raison q = 0,5. Converge-t-elle ?", options: ["Oui, vers 0", "Non, elle diverge", "Oui, vers 1", "Ça dépend de u₀"], correctIndex: 0, explanation: "|q| = 0,5 < 1, donc la suite converge vers 0." },
       { question: "uₙ = 2n + 3. Quel est u₅ ?", options: ["7", "10", "13", "15"], correctIndex: 2, explanation: "u₅ = 2×5 + 3 = 13." },
     ]} /> },
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• Suite arithmétique : uₙ = u₀ + n×r (progression linéaire)</li><li>• Suite géométrique : uₙ = u₀ × qⁿ (convergence si |q| &lt; 1)</li><li>• Convergence ⟺ la limite existe et est finie</li><li>• Récurrence : calculer les termes successivement</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: <div className="space-y-3">{[{ topic: "Fonctions exponentielles", description: "L'exponentielle est liée aux suites par la limite (1+1/n)ⁿ.", icon: "𝑒" }, { topic: "Limites et continuité", description: "Approfondir les techniques de calcul de limites.", icon: "∞" }].map((item, i) => <Card key={i} className="border-border/50 bg-card py-3 hover:border-primary/20 transition-colors"><CardContent className="flex items-start gap-3 px-4"><span className="text-xl">{item.icon}</span><div><p className="text-sm font-semibold text-foreground">{item.topic}</p><p className="text-xs text-muted-foreground mt-0.5">{item.description}</p></div></CardContent></Card>)}</div> },
   ];

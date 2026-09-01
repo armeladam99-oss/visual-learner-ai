@@ -707,6 +707,12 @@ export function getMathQuadraticSections(): LessonSection[] {
               description: "Superpose plusieurs courbes",
               variant: "comparaison",
             },
+            {
+              label: "🧮 Résolveur de polynôme",
+              icon: "🧮",
+              description: "Entre a, b, c et obtiens le graphique + tableau de variations",
+              variant: "polynomial-solver",
+            },
           ]}
         />
       ),
@@ -764,7 +770,28 @@ export function getMathQuadraticSections(): LessonSection[] {
       ),
     },
 
-    // 17. Résumé
+    // 17. Exercices avancés (à venir)
+    {
+      id: "advanced-exercises",
+      type: "exercises",
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              Des exercices complexes et des problèmes de concours seront ajoutés prochainement.
+              Cette section inclura des sujets du bac blanc, des exercices de synthèse et des défis.
+            </p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
+    // 18. Résumé
     {
       id: "summary",
       type: "summary",

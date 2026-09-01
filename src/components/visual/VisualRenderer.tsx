@@ -7,6 +7,7 @@ import { SignGraph } from "./SignGraph";
 import { CircuitDiagram } from "./CircuitDiagram";
 import { FreeBodyDiagram } from "./FreeBodyDiagram";
 import { MolecularStructure } from "./MolecularStructure";
+import { PolynomialSolver } from "./PolynomialSolver";
 import { LabEquipment } from "./LabEquipment";
 import { VectorDiagram } from "./VectorDiagram";
 import { WaveDiagram } from "./WaveDiagram";
@@ -491,6 +492,14 @@ export function VisualRenderer({ variant, subject }: VisualRendererProps) {
 
         {subject === "physics" && variant === "wave-stationary" && (
           <WaveDiagram variant="stationary" />
+        )}
+
+        {subject === "math" && variant === "polynomial-solver" && (
+          <PolynomialSolver />
+        )}
+
+        {subject === "chemistry" && variant === "molecule-all" && (
+          <MolecularStructure />
         )}
 
         {subject === "chemistry" && variant === "molecule-water" && (

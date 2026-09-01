@@ -70,6 +70,23 @@ export function getChimieSuiviSections(): LessonSection[] {
       { question: "Pour une réaction d'ordre 1, le graphique de ln[A] vs t est :", options: ["Une parabole", "Une droite", "Une exponentielle", "Un cercle"], correctIndex: 1, explanation: "Pour une réaction d'ordre 1, ln[A] = ln[A]₀ − k·t, ce qui est une droite de pente −k." },
       { question: "La demi-vie d'une réaction d'ordre 1 dépend de :", options: ["La concentration initiale", "La constante de vitesse k uniquement", "La température uniquement", "Le volume du réacteur"], correctIndex: 1, explanation: "Pour une réaction d'ordre 1, t½ = ln(2)/k, indépendante de la concentration." },
     ]} /> },
+    {
+      id: "advanced-exercises",
+      type: "exercises" as const,
+      title: "Exercices avancés",
+      icon: "🎯",
+      content: (
+        <Card className="border-border/50 bg-muted/20 border-dashed">
+          <CardContent className="p-8 text-center space-y-3">
+            <div className="text-3xl">📝</div>
+            <h4 className="text-sm font-semibold text-foreground">Exercices avancés — Bientôt disponibles</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">Des exercices complexes et des problèmes de concours seront ajoutés prochainement.</p>
+            <Badge variant="secondary" className="text-[10px]">En développement</Badge>
+          </CardContent>
+        </Card>
+      ),
+    },
+
     { id: "summary", type: "summary", title: "Résumé", icon: "📋", content: <Card className="border-border/50 bg-muted/30"><CardContent className="p-5"><ul className="text-sm text-muted-foreground space-y-1"><li>• v = −d[A]/dt = taux de disparition du réactif</li><li>• Ordre 0 : [A] décroît linéairement</li><li>• Ordre 1 : [A] décroît exponentiellement, ln[A] linéaire</li><li>• t½ = ln(2)/k pour l'ordre 1 (indépendant de [A]₀)</li></ul></CardContent></Card> },
     { id: "next-steps", type: "next-steps", title: "Que faut-il réviser ensuite ?", icon: "🔄", content: <div className="space-y-3">{[{ topic: "Réactions acido-basiques", description: "Dosage et courbes de titrage.", icon: "⚗️" }, { topic: "Transformations nucléaires", description: "Radioactivité et décroissance.", icon: "☢️" }].map((item, i) => <Card key={i} className="border-border/50 bg-card py-3 hover:border-primary/20 transition-colors"><CardContent className="flex items-start gap-3 px-4"><span className="text-xl">{item.icon}</span><div><p className="text-sm font-semibold text-foreground">{item.topic}</p><p className="text-xs text-muted-foreground mt-0.5">{item.description}</p></div></CardContent></Card>)}</div> },
   ];
