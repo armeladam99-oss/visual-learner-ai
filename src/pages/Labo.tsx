@@ -369,13 +369,13 @@ export default function LaboPage() {
         ];
         const groqResult = await groqChatAction({ messages: groqMessages });
 
-        if (!groqResult.error && groqResult.response) {
+        if (!groqResult.error) {
           let vizCreated = false;
+          const responseText = groqResult.response || "Je n'ai pas pu générer de réponse.";
 
           // If Groq returned a spec (visualization)
           if (groqResult.spec && typeof groqResult.spec === "object") {
             const rawSpec = groqResult.spec as Record<string, unknown>;
-            // Ensure params has required fields for function plots
             if (rawSpec.params && typeof rawSpec.params === "object") {
               const params = rawSpec.params as Record<string, unknown>;
               if (params.expr && !params.xMin) {
@@ -385,15 +385,15 @@ export default function LaboPage() {
             }
             const validation = validateSpec(rawSpec);
             if (validation.valid && validation.spec) {
-              setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: [], explanation: groqResult.response }));
-              setCurrentExplanation(groqResult.response || "");
+              setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: [], explanation: responseText }));
+              setCurrentExplanation(responseText);
               vizCreated = true;
             }
           }
 
           const assistantMsg: Message = {
             role: "assistant",
-            content: groqResult.response,
+            content: responseText,
             timestamp: new Date(),
           };
           setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: vizCreated ? "lab" : "general" }));
@@ -459,7 +459,7 @@ export default function LaboPage() {
       // Handle chat errors
       if (result.error) {
         const errorMessages: Record<string, string> = {
-          NO_API_KEY: "⚠️ **Google API Key non configurée.**\n\nPour activer l'IA conversationale, ajoute `GOOGLE_API_KEY` dans les paramètres de clés API du projet.\n\nEn attendant, le laboratoire local fonctionne normalement avec toutes ses fonctions.",
+          NO_API_KEY: "⚠️ **Gemini non configuré.** L'IA Groq/Llama est disponible. Si tu veux aussi Gemini, ajoute `GOOGLE_API_KEY`.",
           INVALID_KEY: "⚠️ **Clé API invalide.** Vérifie que GOOGLE_API_KEY est correcte.",
           RATE_LIMITED: "⏳ **Trop de requêtes.** Attends un moment puis réessaie.",
           NETWORK_ERROR: "🌐 **Erreur de connexion.** Vérifie ta connexion internet.",
