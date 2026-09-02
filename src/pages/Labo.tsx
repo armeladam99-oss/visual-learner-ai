@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import {
   FlaskConical,
   Send,
@@ -15,6 +17,18 @@ import {
   Camera,
   ArrowDown,
   Sparkles,
+  RotateCcw,
+  Plus,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  BarChart3,
+  Globe,
+  Zap,
+  Dna,
+  Cpu,
+  Sigma,
+  Orbit,
 } from "lucide-react";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -27,12 +41,136 @@ import {
   type AIContext,
   type Message,
 } from "@/lib/ai-engine";
-import { parseVizRequest, isModificationRequest, parseModification, generateExplanation } from "@/lib/viz-parser";
-import type { VizRequest } from "@/lib/viz-types";
+import type { LabVizSpec, LabSliderParam, LabWorkspace } from "@/lib/lab/lab-schema";
+import { labEngine, addToWorkspace, modifyVizSpec, createWorkspace } from "@/lib/lab/lab-engine";
 import { FunctionPlot2D } from "@/components/visual/FunctionPlot2D";
 import { Scene3DViewer } from "@/components/visual/Scene3DViewer";
 import { PhysicsSimulation } from "@/components/visual/PhysicsSimulation";
 import { ScientificDiagram } from "@/components/visual/ScientificDiagram";
+import { GeometryCanvas } from "@/components/lab/GeometryCanvas";
+import { DataChart } from "@/components/lab/DataChart";
+import { AstronomyScene } from "@/components/lab/AstronomyScene";
+import { CircuitBuilder } from "@/components/lab/CircuitBuilder";
+
+// ═══════════════════════════════════════════════════════════════
+// 🧪 OUTILS DU LABORATOIRE — Sidebar
+// ═══════════════════════════════════════════════════════════════
+
+const LAB_TOOLS = [
+  { icon: Sigma, label: "Graphique", domain: "math", color: "text-indigo-400" },
+  { icon: Cpu, label: "Géométrie", domain: "geometry", color: "text-emerald-400" },
+  { icon: Globe, label: "3D", domain: "math", color: "text-violet-400" },
+  { icon: Zap, label: "Physique", domain: "physics", color: "text-amber-400" },
+  { icon: FlaskConical, label: "Chimie", domain: "chemistry", color: "text-purple-400" },
+  { icon: Dna, label: "Biologie", domain: "biology", color: "text-green-400" },
+  { icon: Zap, label: "Électricité", domain: "electricity", color: "text-cyan-400" },
+  { icon: Orbit, label: "Astronomie", domain: "astronomy", color: "text-violet-400" },
+  { icon: BarChart3, label: "Données", domain: "data", color: "text-cyan-400" },
+];
+
+function Sidebar({
+  tools,
+  collapsed,
+  onToggle,
+  onToolClick,
+}: {
+  tools: typeof LAB_TOOLS;
+  collapsed: boolean;
+  onToggle: () => void;
+  onToolClick: (domain: string) => void;
+}) {
+  return (
+    <div className={`flex-shrink-0 border-r border-slate-800 bg-slate-900/50 transition-all duration-200 ${collapsed ? "w-12" : "w-40"}`}>
+      <div className="flex items-center justify-between p-2 border-b border-slate-800">
+        {!collapsed && <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Outils</span>}
+        <Button variant="ghost" size="sm" className="size-6 p-0 text-slate-500 hover:text-white" onClick={onToggle}>
+          {collapsed ? <ChevronRight className="size-3" /> : <ChevronLeft className="size-3" />}
+        </Button>
+      </div>
+      <div className="py-1 space-y-0.5">
+        {tools.map((tool) => {
+          const Icon = tool.icon;
+          return (
+            <button
+              key={tool.label}
+              onClick={() => onToolClick(tool.domain)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-slate-800/50 transition-colors group ${collapsed ? "justify-center" : ""}`}
+              title={tool.label}
+            >
+              <Icon className={`size-4 flex-shrink-0 ${tool.color}`} />
+              {!collapsed && (
+                <span className="text-[11px] text-slate-400 group-hover:text-white transition-colors truncate">
+                  {tool.label}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📊 RENDU DE VISUALISATION — Selecteur automatique
+// ═══════════════════════════════════════════════════════════════
+
+function VizRenderer({
+  spec,
+  onParamChange,
+}: {
+  spec: LabVizSpec;
+  onParamChange?: (key: string, value: number) => void;
+}) {
+  const vizRequest = {
+    type: spec.type as never,
+    title: spec.title,
+    explanation: spec.description,
+    equations: spec.equations,
+    params: spec.params as Record<string, never>,
+  };
+
+  switch (spec.domain) {
+    case "math":
+      if (spec.type === "function-plot" || spec.type === "multi-function-plot" || spec.type === "derivative-plot") {
+        return <FunctionPlot2D viz={vizRequest} />;
+      }
+      if (spec.type === "surface-3d" || spec.type === "curve-3d" || spec.type === "vector-field-3d") {
+        return <Scene3DViewer viz={vizRequest} />;
+      }
+      return <FunctionPlot2D viz={vizRequest} />;
+
+    case "physics":
+      return <PhysicsSimulation viz={vizRequest} />;
+
+    case "chemistry":
+      if (spec.type === "molecule-3d") return <Scene3DViewer viz={vizRequest} />;
+      return <ScientificDiagram viz={vizRequest} />;
+
+    case "biology":
+      return <ScientificDiagram viz={vizRequest} />;
+
+    case "geometry":
+      return <GeometryCanvas spec={spec} />;
+
+    case "astronomy":
+      return <AstronomyScene spec={spec} />;
+
+    case "electricity":
+      if (spec.type === "circuit-rc") {
+        return <CircuitBuilder spec={spec} onParamChange={onParamChange} />;
+      }
+      return <ScientificDiagram viz={vizRequest} />;
+
+    case "data":
+      return <DataChart spec={spec} />;
+
+    default:
+      if (spec.type.includes("3d")) return <Scene3DViewer viz={vizRequest} />;
+      if (spec.type.includes("sim")) return <PhysicsSimulation viz={vizRequest} />;
+      return <FunctionPlot2D viz={vizRequest} />;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // 💬 INDICATEUR DE MODE
@@ -55,99 +193,17 @@ function ModeIndicator({ mode }: { mode: AIMode }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 📊 ZONE DE VISUALISATION
-// ═══════════════════════════════════════════════════════════════
-
-function VisualizationZone({
-  viz,
-  explanation,
-  onModify,
-}: {
-  viz: VizRequest | null;
-  explanation: string;
-  onModify: (msg: string) => void;
-}) {
-  if (!viz) return null;
-
-  const renderVisualization = () => {
-    switch (viz.type) {
-      case "function-2d":
-      case "multi-function-2d":
-      case "parametric-2d":
-      case "polar-2d":
-        return <FunctionPlot2D viz={viz} />;
-      case "surface-3d":
-      case "molecule-3d":
-      case "vector-3d":
-      case "solid-3d":
-      case "pendulum-3d":
-      case "spring-3d":
-        return <Scene3DViewer viz={viz} />;
-      case "projectile-sim":
-      case "chute-libre-sim":
-      case "pendulum-sim":
-      case "onde-sim":
-      case "circuit-rc-sim":
-      case "dosage-sim":
-        return <PhysicsSimulation viz={viz} />;
-      case "diagram-circuit":
-      case "diagram-forces":
-      case "diagram-optique":
-      case "diagram-cellule":
-        return <ScientificDiagram viz={viz} />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="space-y-4"
-    >
-      {renderVisualization()}
-      {explanation && (
-        <Card className="border-slate-700/50 bg-slate-900/50">
-          <CardContent className="p-4">
-            <div className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">
-              {explanation.split("**").map((part, j) =>
-                j % 2 === 1 ? (
-                  <strong key={j} className="text-white">
-                    {part}
-                  </strong>
-                ) : (
-                  <span key={j}>{part}</span>
-                )
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </motion.div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
 // 💬 BULLE DE MESSAGE
 // ═══════════════════════════════════════════════════════════════
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-    >
-      <div
-        className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-          isUser
-            ? "bg-cyan-600 text-white rounded-br-md"
-            : "bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-md"
-        }`}
-      >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+        isUser ? "bg-cyan-600 text-white rounded-br-md" : "bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-md"
+      }`}>
         {!isUser && (
           <div className="flex items-center gap-1.5 mb-2">
             <Brain className="size-3 text-cyan-400" />
@@ -156,13 +212,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         )}
         <div className="text-sm leading-relaxed whitespace-pre-line">
           {msg.content.split("**").map((part, j) =>
-            j % 2 === 1 ? (
-              <strong key={j} className="text-white">
-                {part}
-              </strong>
-            ) : (
-              <span key={j}>{part}</span>
-            )
+            j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : <span key={j}>{part}</span>
           )}
         </div>
       </div>
@@ -177,24 +227,17 @@ function MessageBubble({ msg }: { msg: Message }) {
 export default function LaboPage() {
   const [ctx, setCtx] = useState<AIContext>(createInitialContext());
   const [input, setInput] = useState("");
-  const [currentViz, setCurrentViz] = useState<VizRequest | null>(null);
-  const [vizExplanation, setVizExplanation] = useState("");
+  const [workspace, setWorkspace] = useState<LabWorkspace>(createWorkspace());
   const [isLoading, setIsLoading] = useState(false);
-  const [learningMode, setLearningMode] = useState<"explain" | "help">("explain");
   const [showWelcome, setShowWelcome] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentExplanation, setCurrentExplanation] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const vizEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ctx.conversationHistory]);
-
-  useEffect(() => {
-    if (currentViz) {
-      vizEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [currentViz]);
 
   const chatAction = useAction(api.aiChat.chat);
 
@@ -202,196 +245,81 @@ export default function LaboPage() {
   // ENVOI DE MESSAGE
   // ═══════════════════════════════════════════════════════════
 
-  const handleSend = useCallback(
-    async (text?: string) => {
-      const query = text || input.trim();
-      if (!query || isLoading) return;
+  const handleSend = useCallback(async (text?: string) => {
+    const query = text || input.trim();
+    if (!query || isLoading) return;
 
-      setShowWelcome(false);
+    setShowWelcome(false);
 
-      const userMsg: Message = {
-        role: "user",
-        content: query,
+    const userMsg: Message = { role: "user", content: query, timestamp: new Date() };
+    setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, userMsg] }));
+    setInput("");
+    setIsLoading(true);
+
+    // ─── STEP 1: Try the lab engine ───
+    const labResult = labEngine(query);
+
+    if (labResult.success && labResult.specs.length > 0) {
+      // Visualisation generated
+      setWorkspace((prev) => addToWorkspace(prev, labResult));
+      setCurrentExplanation(labResult.explanation);
+
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: `📊 **${labResult.specs[0].title}** générée !\n\n${labResult.explanation}`,
         timestamp: new Date(),
       };
-
       setCtx((prev) => ({
         ...prev,
-        conversationHistory: [...prev.conversationHistory, userMsg],
+        conversationHistory: [...prev.conversationHistory, assistantMsg],
+        currentMode: "lab",
       }));
-      setInput("");
-      setIsLoading(true);
+      setIsLoading(false);
+      return;
+    }
 
-      // ─── STEP 1: Check for local experiment/hint triggers ───
-      const localResult = processMessage(query, ctx);
-      const lower = query.toLowerCase();
+    // ─── STEP 2: Check for local experiment triggers ───
+    const localResult = processMessage(query, ctx);
+    const lower = query.toLowerCase();
 
-      const isExperimentTrigger = !!localResult.experiment;
-      const isHintMode =
-        ctx.currentExercise &&
-        ctx.learningMode === "help" &&
-        (lower.includes("indice") ||
-          lower.includes("hint") ||
-          lower.includes("aide") ||
-          lower.includes("comprends") ||
-          lower.includes("suivant"));
+    const isHintMode = ctx.currentExercise && ctx.learningMode === "help" &&
+      (lower.includes("indice") || lower.includes("hint") || lower.includes("aide") || lower.includes("suivant"));
 
-      if (isHintMode) {
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: localResult.response,
-          timestamp: new Date(),
-          hints: localResult.hints,
-        };
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, assistantMsg],
-          learningMode: learningMode,
-          currentMode: "exercise",
-        }));
-        setIsLoading(false);
-        return;
-      }
+    if (isHintMode) {
+      const assistantMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), hints: localResult.hints };
+      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "exercise" }));
+      setIsLoading(false);
+      return;
+    }
 
-      if (isExperimentTrigger) {
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: localResult.response,
-          timestamp: new Date(),
-          experiment: localResult.experiment || undefined,
-        };
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, assistantMsg],
-          learningMode: learningMode,
-          currentMode: "lab",
-        }));
-        if (localResult.experiment) {
-          // Map experiment names to viz types
-          const experimentToViz: Record<string, VizRequest> = {
-            circuit: {
-              type: "circuit-rc-sim",
-              title: "Circuit RC — Charge / Décharge",
-              explanation: "",
-              equations: ["τ = R·C", "Uc(t) = U₀(1 − e^(−t/τ))"],
-              params: { R: 100, C: 100, U0: 5 },
-            },
-            dosage: {
-              type: "dosage-sim",
-              title: "Dosage acido-basique",
-              explanation: "",
-              equations: ["pH = −log[H₃O⁺]", "C₁V₁ = C₂V₂"],
-              params: { acidConc: 0.1, baseConc: 0.1, acidVol: 50, volume: 0 },
-            },
-            fonction: {
-              type: "function-2d",
-              title: "Explorateur de fonctions",
-              explanation: "",
-              equations: [],
-              params: { expr: "x^2", xMin: -10, xMax: 10 },
-            },
-          };
-          const viz = experimentToViz[localResult.experiment];
-          if (viz) {
-            setCurrentViz(viz);
-            setVizExplanation(generateExplanation(viz));
-          }
-        }
-        setIsLoading(false);
-        return;
-      }
+    if (localResult.experiment) {
+      const assistantMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), experiment: localResult.experiment };
+      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+      setIsLoading(false);
+      return;
+    }
 
-      // ─── STEP 2: Try visualization parser first ───
-      if (currentViz && isModificationRequest(query)) {
-        // Modification of current viz
-        const mods = parseModification(query, currentViz);
-        const newViz = { ...currentViz, ...mods, params: { ...currentViz.params, ...mods.params } };
-        setCurrentViz(newViz);
-        setVizExplanation(generateExplanation(newViz));
+    // ─── STEP 3: Everything else → Gemini ───
+    try {
+      const systemPrompt = getSystemPrompt(ctx);
+      const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
+      const result = await chatAction({ messages: geminiMessages, systemPrompt });
 
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: `✅ Visualisation mise à jour !\n\n${generateExplanation(newViz)}`,
-          timestamp: new Date(),
-        };
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, assistantMsg],
-          currentMode: "lab",
-        }));
-        setIsLoading(false);
-        return;
-      }
-
-      const vizRequest = parseVizRequest(query);
-      if (vizRequest) {
-        setCurrentViz(vizRequest);
-        const explanation = generateExplanation(vizRequest);
-        setVizExplanation(explanation);
-
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: `📊 **${vizRequest.title}** générée !\n\n${explanation}\n\nTu peux modifier la visualisation en tapant tes demandes.`,
-          timestamp: new Date(),
-        };
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, assistantMsg],
-          currentMode: "lab",
-        }));
-        setIsLoading(false);
-        return;
-      }
-
-      // ─── STEP 3: Everything else → Gemini ───
-      try {
-        const systemPrompt = getSystemPrompt(ctx);
-        const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
-
-        const result = await chatAction({
-          messages: geminiMessages,
-          systemPrompt,
-        });
-
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: result.response,
-          timestamp: new Date(),
-        };
-
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, assistantMsg],
-          learningMode: learningMode,
-          currentMode: detectModeFromMessage(query),
-        }));
-      } catch {
-        // Fallback to local engine
-        const fallbackMsg: Message = {
-          role: "assistant",
-          content: localResult.response,
-          timestamp: new Date(),
-          hints: localResult.hints,
-        };
-        setCtx((prev) => ({
-          ...prev,
-          conversationHistory: [...prev.conversationHistory, fallbackMsg],
-          learningMode: learningMode,
-          currentMode: localResult.mode,
-        }));
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [input, ctx, learningMode, chatAction, isLoading, currentViz]
-  );
+      const assistantMsg: Message = { role: "assistant", content: result.response, timestamp: new Date() };
+      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: detectModeFromMessage(query) }));
+    } catch {
+      const fallbackMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), hints: localResult.hints };
+      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, fallbackMsg], currentMode: localResult.mode }));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [input, ctx, isLoading, chatAction]);
 
   function detectModeFromMessage(msg: string): AIMode {
     const lower = msg.toLowerCase();
     if (lower.includes("photo") || lower.includes("image")) return "image";
     if (lower.includes("exercice") || lower.includes("résous")) return "exercise";
-    if (lower.includes("circuit") || lower.includes("dosage") || lower.includes("simulation")) return "lab";
-    if (lower.includes("explique") || lower.includes("cours") || lower.includes("dérivée")) return "education";
+    if (lower.includes("explique") || lower.includes("cours")) return "education";
     return "general";
   }
 
@@ -400,189 +328,239 @@ export default function LaboPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const photoMsg: Message = {
-      role: "user",
-      content: `📷 Photo importée : ${file.name}`,
-      timestamp: new Date(),
-    };
-
+    const photoMsg: Message = { role: "user", content: `📷 Photo importée : ${file.name}`, timestamp: new Date() };
     const analysisMsg: Message = {
       role: "assistant",
-      content: `🔎 **Analyse de l'image :**\n\nJ'ai reçu ta photo "${file.name}".\n\nEn V1, je ne peux pas encore analyser les images directement. Cependant, je suis prêt à接收 de vraies images via une API IA multimodale (GPT-4V, Claude Vision, etc.).\n\n**Pour l'instant, tu peux :**\n1. Décrire ce que tu vois dans la photo\n2. Copier le texte de l'exercice\n3. Je résoudrai l'exercice étape par étape\n\nDis-moi ce qu'il y a dans ta photo ! 👇`,
+      content: `🔎 **Analyse de l'image :**\n\nJ'ai reçu ta photo "${file.name}".\n\n**Pour l'instant, tu peux :**\n1. Décrire ce que tu vois\n2. Copier le texte de l'exercice\n3. Je résoudrai étape par étape\n\nDis-moi ce qu'il y a dans ta photo ! 👇`,
       timestamp: new Date(),
     };
+    setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, photoMsg, analysisMsg] }));
+  };
 
-    setCtx((prev) => ({
-      ...prev,
-      conversationHistory: [...prev.conversationHistory, photoMsg, analysisMsg],
-    }));
+  const handleToolClick = (domain: string) => {
+    const toolExamples: Record<string, string> = {
+      math: "Trace f(x) = x² - 4x + 3",
+      geometry: "Montre-moi un triangle ABC avec sa médiatrice",
+      physics: "Simule un projectile à 20 m/s avec un angle de 45°",
+      chemistry: "Montre-moi une molécule d'eau en 3D",
+      biology: "Montre-moi une cellule végétale",
+      electricity: "Montre-moi un circuit RC",
+      astronomy: "Montre-moi le système solaire",
+      data: "Statistiques : 12 25 18 32 15 28 22 35 10 20",
+    };
+    handleSend(toolExamples[domain] || `Montre-moi quelque chose en ${domain}`);
+  };
+
+  const handleSliderChange = (vizId: string, key: string, value: number) => {
+    setWorkspace((prev) => {
+      const viz = prev.visualizations.find((v) => v.id === vizId);
+      if (!viz) return prev;
+      return {
+        ...prev,
+        visualizations: prev.visualizations.map((v) =>
+          v.id === vizId ? { ...v, params: { ...v.params, [key]: value } } : v
+        ),
+        sliders: prev.sliders.map((s) => s.key === key ? { ...s, current: value } : s),
+      };
+    });
+  };
+
+  const handleClearWorkspace = () => {
+    setWorkspace(createWorkspace());
+    setCurrentExplanation("");
   };
 
   const messages = ctx.conversationHistory;
+  const activeViz = workspace.visualizations.find((v) => v.id === workspace.activeVizId) || workspace.visualizations[workspace.visualizations.length - 1];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col">
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50 border-b border-cyan-500/20 bg-slate-900/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <FlaskConical className="size-5 text-cyan-400" />
             <span className="text-base font-bold text-white">🧪 Labo IA</span>
-            <Badge variant="secondary" className="text-[10px] bg-cyan-500/10 text-cyan-400">
-              2e BAC
-            </Badge>
+            <Badge variant="secondary" className="text-[10px] bg-cyan-500/10 text-cyan-400">2e BAC</Badge>
             {messages.length > 0 && <ModeIndicator mode={ctx.currentMode} />}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLearningMode("explain")}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
-                learningMode === "explain"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "bg-slate-800 text-slate-500"
-              }`}
-            >
-              💬 Explique-moi
-            </button>
-            <button
-              onClick={() => setLearningMode("help")}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
-                learningMode === "help"
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                  : "bg-slate-800 text-slate-500"
-              }`}
-            >
-              💡 Aide-moi
-            </button>
+            {workspace.visualizations.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-[10px] text-slate-400 hover:text-white"
+                onClick={handleClearWorkspace}>
+                <RotateCcw className="size-3 mr-1" /> Nouveau
+              </Button>
+            )}
+            {workspace.visualizations.length > 0 && (
+              <Badge variant="secondary" className="text-[10px] bg-slate-700 text-slate-300">
+                {workspace.visualizations.length} viz
+              </Badge>
+            )}
           </div>
         </div>
       </header>
 
-      {/* ─── MAIN CONTENT ─── */}
-      <div className="flex-1 mx-auto w-full max-w-5xl px-4 py-6 space-y-6">
+      {/* ─── MAIN LAYOUT: Sidebar + Workspace + Chat ─── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar
+          tools={LAB_TOOLS}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToolClick={handleToolClick}
+        />
 
-        {/* Welcome screen */}
-        {showWelcome && messages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-6 py-12"
-          >
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-cyan-500/30 mx-auto flex items-center justify-center">
-              <Atom className="size-12 text-cyan-400" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold text-white">Laboratoire Scientifique IA</h2>
-              <p className="text-sm text-slate-400 max-w-lg mx-auto">
-                Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D — et l&apos;IA génère la visualisation.
-              </p>
-            </div>
+        {/* Center: Workspace + Chat */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Workspace area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-            <div className="grid gap-3 sm:grid-cols-2 max-w-xl mx-auto text-left">
-              {[
-                { ex: "Trace f(x) = x² − 3x + 2", icon: "📈", desc: "Graphique de fonction" },
-                { ex: "Simule un projectile à 20 m/s", icon: "🎯", desc: "Simulation physique" },
-                { ex: "Montre-moi une molécule en 3D", icon: "🧊", desc: "Modèle 3D" },
-                { ex: "Schéma de forces isolées", icon: "📐", desc: "Diagramme scientifique" },
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSend(item.ex)}
-                  className="flex items-start gap-3 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 text-left hover:bg-slate-800 hover:border-slate-600 transition-all"
-                >
-                  <span className="text-xl mt-0.5">{item.icon}</span>
-                  <div>
-                    <p className="text-xs font-medium text-white">{item.desc}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{item.ex}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <ArrowDown className="size-5 text-slate-600 mx-auto mt-4 animate-bounce" />
-          </motion.div>
-        )}
-
-        {/* Visualization zone (above chat) */}
-        <AnimatePresence mode="wait">
-          {currentViz && (
-            <VisualizationZone
-              viz={currentViz}
-              explanation={vizExplanation}
-              onModify={handleSend}
-            />
-          )}
-        </AnimatePresence>
-        <div ref={vizEndRef} />
-
-        {/* Messages */}
-        {messages.length > 0 && (
-          <div className="space-y-3">
-            {messages.map((msg, i) => (
-              <MessageBubble key={i} msg={msg} />
-            ))}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 max-w-3xl"
-              >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                  <Atom className="size-3.5 text-white" />
+            {/* Welcome screen */}
+            {showWelcome && messages.length === 0 && workspace.visualizations.length === 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                className="text-center space-y-6 py-8">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-cyan-500/30 mx-auto flex items-center justify-center">
+                  <Atom className="size-10 text-cyan-400" />
                 </div>
-                <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="size-3.5 text-cyan-400 animate-spin" />
-                    <span className="text-xs text-slate-400">Réflexion...</span>
-                  </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Laboratoire Scientifique IA</h2>
+                  <p className="text-sm text-slate-400 max-w-lg mx-auto">
+                    Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D — et l&apos;IA génère la visualisation.
+                  </p>
                 </div>
+                <div className="grid gap-2 sm:grid-cols-2 max-w-xl mx-auto text-left">
+                  {[
+                    { ex: "Trace f(x) = x² − 4x + 3", icon: Sigma, desc: "Graphique de fonction", color: "text-indigo-400" },
+                    { ex: "Simule un projectile à 20 m/s", icon: Zap, desc: "Simulation physique", color: "text-amber-400" },
+                    { ex: "Montre-moi une molécule en 3D", icon: FlaskConical, desc: "Modèle 3D chimie", color: "text-purple-400" },
+                    { ex: "Construis un triangle ABC avec médiatrice", icon: Cpu, desc: "Géométrie dynamique", color: "text-emerald-400" },
+                    { ex: "Montre le système solaire", icon: Orbit, desc: "Astronomie interactive", color: "text-violet-400" },
+                    { ex: "Simule un circuit RC", icon: Zap, desc: "Électricité interactive", color: "text-cyan-400" },
+                  ].map((item, i) => (
+                    <button key={i} onClick={() => handleSend(item.ex)}
+                      className="flex items-start gap-3 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 text-left hover:bg-slate-800 hover:border-slate-600 transition-all">
+                      <item.icon className={`size-5 mt-0.5 flex-shrink-0 ${item.color}`} />
+                      <div>
+                        <p className="text-xs font-medium text-white">{item.desc}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{item.ex}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <ArrowDown className="size-5 text-slate-600 mx-auto mt-4 animate-bounce" />
               </motion.div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
 
-      {/* ─── INPUT BAR ─── */}
-      <div className="sticky bottom-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 p-4">
-        <div className="max-w-5xl mx-auto flex gap-2">
-          <button
-            onClick={handlePhotoUpload}
-            className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-cyan-400 transition-all"
-          >
-            <Camera className="size-4" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <Textarea
-            placeholder="Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="min-h-[44px] text-sm resize-none bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-          <Button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500"
-          >
-            {isLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
+            {/* Active visualization */}
+            <AnimatePresence mode="wait">
+              {activeViz && (
+                <motion.div key={activeViz.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3">
+                  <VizRenderer spec={activeViz} onParamChange={(key, val) => handleSliderChange(activeViz.id, key, val)} />
+
+                  {/* Sliders for this visualization */}
+                  {workspace.sliders.length > 0 && (
+                    <Card className="border-slate-700/50 bg-slate-900/50">
+                      <CardContent className="p-3 space-y-2">
+                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Paramètres</p>
+                        {workspace.sliders.map((s) => (
+                          <div key={s.key} className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-400 w-12">{s.symbol}</span>
+                            <Slider
+                              min={s.min} max={s.max} step={s.step}
+                              value={[s.current]}
+                              onValueChange={([v]) => handleSliderChange(activeViz.id, s.key, v)}
+                              className="flex-1 [&_[role=slider]]:bg-cyan-500"
+                            />
+                            <Input
+                              type="number"
+                              value={s.current}
+                              onChange={(e) => handleSliderChange(activeViz.id, s.key, parseFloat(e.target.value) || s.default)}
+                              className="w-16 h-6 text-[10px] bg-slate-800 border-slate-700 text-white text-center"
+                            />
+                            <span className="text-[10px] text-slate-500 w-8">{s.unit}</span>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Explanation */}
+                  {currentExplanation && (
+                    <Card className="border-slate-700/50 bg-slate-900/50">
+                      <CardContent className="p-4">
+                        <div className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">
+                          {currentExplanation.split("**").map((part, j) =>
+                            j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : <span key={j}>{part}</span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* History thumbnails */}
+                  {workspace.visualizations.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto py-1">
+                      {workspace.visualizations.map((viz) => (
+                        <button key={viz.id}
+                          onClick={() => setWorkspace((prev) => ({ ...prev, activeVizId: viz.id }))}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] border transition-all ${
+                            viz.id === workspace.activeVizId
+                              ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-400"
+                              : "border-slate-700 bg-slate-800/50 text-slate-400 hover:bg-slate-800"
+                          }`}>
+                          {viz.title.slice(0, 20)}{viz.title.length > 20 ? "…" : ""}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Messages */}
+            {messages.length > 0 && (
+              <div className="space-y-3">
+                {messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)}
+                {isLoading && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 max-w-3xl">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <Atom className="size-3.5 text-white" />
+                    </div>
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="size-3.5 text-cyan-400 animate-spin" />
+                        <span className="text-xs text-slate-400">Réflexion...</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             )}
-          </Button>
+          </div>
+
+          {/* ─── INPUT BAR ─── */}
+          <div className="border-t border-slate-800 bg-slate-900/90 backdrop-blur-xl p-4">
+            <div className="flex gap-2">
+              <button onClick={handlePhotoUpload}
+                className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-cyan-400 transition-all">
+                <Camera className="size-4" />
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              <Textarea
+                placeholder="Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="min-h-[44px] text-sm resize-none bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              />
+              <Button onClick={() => handleSend()} disabled={!input.trim() || isLoading}
+                className="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500">
+                {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
