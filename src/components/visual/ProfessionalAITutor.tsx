@@ -533,7 +533,7 @@ Pour des questions très spécifiques, n'hésite pas à reformuler ta demande av
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span>🤖 Prof IA — {expert.name}</span>
+                <span>🤖 Studio ADAM — {expert.name}</span>
                 <Badge variant="secondary" className="text-[10px]">
                   {subject}
                 </Badge>

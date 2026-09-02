@@ -73,7 +73,7 @@ export function AITutorPanel({ subject }: AITutorPanelProps) {
         <CardHeader className="bg-gradient-to-r from-primary/[0.05] to-transparent border-b border-border/30">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Bot className="size-5 text-primary" />
-            <span>🤖 Demander au Prof IA</span>
+            <span>🤖 Demander au Studio ADAM IA</span>
             <Badge variant="secondary" className="ml-auto text-xs">
               {subject}
             </Badge>

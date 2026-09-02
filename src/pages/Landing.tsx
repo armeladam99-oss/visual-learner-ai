@@ -34,11 +34,11 @@ const features = [
     icon: <Pencil className="size-5" />,
     title: "Dessine-moi",
     description:
-      "Demande une visualisation et le Prof IA la crée pour toi : courbes, schémas, diagrammes.",
+      "Demande une visualisation et l'IA Studio ADAM la crée pour toi : courbes, schémas, diagrammes.",
   },
   {
     icon: <Sparkles className="size-5" />,
-    title: "Prof IA",
+    title: "Studio ADAM IA",
     description:
       "Pose tes questions et obtiens des explications personnalisées avec des visuels adaptés.",
   },
@@ -85,7 +85,7 @@ export default function Landing() {
           <div className="flex items-center gap-2.5">
             <GraduationCap className="size-6 text-primary" />
             <span className="text-lg font-bold text-foreground tracking-tight">
-              ProfVisuel
+              Studio ADAM
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -491,7 +491,7 @@ export default function Landing() {
             Prêt à réviser autrement ?
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Rejoins ProfVisuel et transforme ta façon d&apos;apprendre les
+            Rejoins Studio ADAM et transforme ta façon d&apos;apprendre les
             sciences avec des cours visuels et interactifs.
           </p>
           <Button
@@ -511,7 +511,7 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <GraduationCap className="size-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">
-              ProfVisuel
+              Studio ADAM
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

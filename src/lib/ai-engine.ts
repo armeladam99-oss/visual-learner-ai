@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🧠 MOTEUR IA PÉDAGOGIQUE — ProfVisuel
+// 🧠 MOTEUR IA PÉDAGOGIQUE — Studio ADAM
 // Architecture modulaire, extensible pour vrai LLM plus tard
 // ═══════════════════════════════════════════════════════════════
 
@@ -431,7 +431,7 @@ export function createInitialContext(): AIContext {
 // 🤖 VRAI MODÈLE IA — Gemini via Convex Action
 // ═══════════════════════════════════════════════════════════════
 
-const SYSTEM_PROMPT = `Tu es l'assistant scientifique de ProfVisuel, une application éducative pour les élèves de 2e année Bac au Maroc.
+const SYSTEM_PROMPT = `Tu es l'assistant scientifique de Studio ADAM, une application éducative pour les élèves de 2e année Bac au Maroc.
 
 IDENTITÉ :
 - Tu es un assistant amical, patient et pédagogique.

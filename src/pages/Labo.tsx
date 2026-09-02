@@ -240,7 +240,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         {!isUser && (
           <div className="flex items-center gap-1.5 mb-2">
             <Brain className="size-3 text-cyan-400" />
-            <span className="text-[10px] font-semibold text-cyan-400">Prof IA</span>
+            <span className="text-[10px] font-semibold text-cyan-400">Studio ADAM IA</span>
           </div>
         )}
         <div className="text-sm leading-relaxed whitespace-pre-line">

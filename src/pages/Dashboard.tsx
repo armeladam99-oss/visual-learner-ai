@@ -44,7 +44,7 @@ export default function Dashboard() {
             <Link to="/" className="flex items-center gap-2">
               <GraduationCap className="size-6 text-primary" />
               <span className="text-lg font-bold text-foreground tracking-tight">
-                ProfVisuel
+                Studio ADAM
               </span>
             </Link>
           </div>
