@@ -369,21 +369,34 @@ export default function LaboPage() {
         ];
         const groqResult = await groqChatAction({ messages: groqMessages });
 
-        if (!groqResult.error) {
+        if (!groqResult.error && groqResult.response) {
+          let vizCreated = false;
+
           // If Groq returned a spec (visualization)
           if (groqResult.spec && typeof groqResult.spec === "object") {
-            const validation = validateSpec(groqResult.spec);
+            const rawSpec = groqResult.spec as Record<string, unknown>;
+            // Ensure params has required fields for function plots
+            if (rawSpec.params && typeof rawSpec.params === "object") {
+              const params = rawSpec.params as Record<string, unknown>;
+              if (params.expr && !params.xMin) {
+                params.xMin = -10;
+                params.xMax = 10;
+              }
+            }
+            const validation = validateSpec(rawSpec);
             if (validation.valid && validation.spec) {
               setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: [], explanation: groqResult.response }));
               setCurrentExplanation(groqResult.response || "");
+              vizCreated = true;
             }
           }
+
           const assistantMsg: Message = {
             role: "assistant",
-            content: groqResult.response || "",
+            content: groqResult.response,
             timestamp: new Date(),
           };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: vizCreated ? "lab" : "general" }));
           setIsLoading(false);
           return;
         }
