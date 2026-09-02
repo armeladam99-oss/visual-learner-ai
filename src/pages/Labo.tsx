@@ -59,6 +59,9 @@ import { MoleculeViewer } from "@/components/lab/MoleculeViewer";
 import { LabWelcome } from "@/components/lab/LabWelcome";
 import { ComponentPalette } from "@/components/lab/ComponentPalette";
 import { WorkspacePanel } from "@/components/lab/WorkspacePanel";
+import { SmartAnalysis } from "@/components/lab/SmartAnalysis";
+import { DataPanel } from "@/components/lab/DataPanel";
+import { ContextActions } from "@/components/lab/ContextActions";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧪 OUTILS DU LABORATOIRE — Sidebar
@@ -658,6 +661,9 @@ export default function LaboPage() {
                     }));
                   }} />
 
+                  {/* Context Actions: smart buttons */}
+                  <ContextActions spec={activeViz} onSendCommand={handleSend} />
+
                   {/* Workspace Panel: Components + Parameters */}
                   <Card className="border-slate-700/50 bg-slate-900/50">
                     <CardContent className="p-3">
@@ -668,6 +674,26 @@ export default function LaboPage() {
                       />
                     </CardContent>
                   </Card>
+
+                  {/* Smart Analysis for math functions */}
+                  {(activeViz.type === "function-plot" || activeViz.type === "multi-function-plot" || activeViz.type === "derivative-plot") && (
+                    <SmartAnalysis
+                      expr={(activeViz.params.expr as string) || "x^2"}
+                      xMin={(activeViz.params.xMin as number) ?? -10}
+                      xMax={(activeViz.params.xMax as number) ?? 10}
+                    />
+                  )}
+
+                  {/* Data Table for math functions */}
+                  {(activeViz.type === "function-plot" || activeViz.type === "multi-function-plot" || activeViz.type === "derivative-plot") && (
+                    <DataPanel
+                      expressions={(activeViz.params.functions as string[]) || [(activeViz.params.expr as string) || "x^2"]}
+                      labels={(activeViz.params.labels as string[]) || ["f(x)"]}
+                      colors={(activeViz.params.colors as string[]) || ["#6366f1"]}
+                      xMin={(activeViz.params.xMin as number) ?? -5}
+                      xMax={(activeViz.params.xMax as number) ?? 5}
+                    />
+                  )}
 
                   {/* Explanation */}
                   {currentExplanation && (
