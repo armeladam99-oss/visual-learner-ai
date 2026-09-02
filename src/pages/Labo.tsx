@@ -52,6 +52,9 @@ import { GeometryCanvas } from "@/components/lab/GeometryCanvas";
 import { DataChart } from "@/components/lab/DataChart";
 import { AstronomyScene } from "@/components/lab/AstronomyScene";
 import { CircuitBuilder } from "@/components/lab/CircuitBuilder";
+import { MoleculeViewer } from "@/components/lab/MoleculeViewer";
+import { LabChooser } from "@/components/lab/LabChooser";
+import { getMolecule } from "@/lib/lab/molecule-library";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧪 OUTILS DU LABORATOIRE — Sidebar
@@ -145,7 +148,23 @@ function VizRenderer({
       return <PhysicsSimulation viz={vizRequest} />;
 
     case "chemistry":
-      if (spec.type === "molecule-3d") return <Scene3DViewer viz={vizRequest} />;
+      if (spec.type === "molecule-3d") {
+        const molKey = (spec.params.molecule as string) || "H2O";
+        const molecules = spec.params.molecules as string[] | undefined;
+        if (molecules && molecules.length > 0) {
+          return (
+            <div className="grid grid-cols-2 gap-4">
+              {molecules.map((mol: string) => {
+                const data = getMolecule(mol);
+                return data ? <MoleculeViewer key={mol} molecule={data} title={data.name} /> : <div key={mol} className="text-slate-500 text-sm">Molécule {mol} non trouvée</div>;
+              })}
+            </div>
+          );
+        }
+        const data = getMolecule(molKey);
+        if (data) return <MoleculeViewer molecule={data} title={data.name} />;
+        return <Scene3DViewer viz={vizRequest} />;
+      }
       return <ScientificDiagram viz={vizRequest} />;
 
     case "biology":
@@ -413,17 +432,9 @@ export default function LaboPage() {
   };
 
   const handleToolClick = (domain: string) => {
-    const toolExamples: Record<string, string> = {
-      math: "Trace f(x) = x² - 4x + 3",
-      geometry: "Montre-moi un triangle ABC avec sa médiatrice",
-      physics: "Simule un projectile à 20 m/s avec un angle de 45°",
-      chemistry: "Montre-moi une molécule d'eau en 3D",
-      biology: "Montre-moi une cellule végétale",
-      electricity: "Montre-moi un circuit RC",
-      astronomy: "Montre-moi le système solaire",
-      data: "Statistiques : 12 25 18 32 15 28 22 35 10 20",
-    };
-    handleSend(toolExamples[domain] || `Montre-moi quelque chose en ${domain}`);
+    // Show a prompt for the user to describe what they want
+    setInput("");
+    // Auto-focus could go here
   };
 
   const handleSliderChange = (vizId: string, key: string, value: number) => {
@@ -492,38 +503,10 @@ export default function LaboPage() {
 
             {/* Welcome screen */}
             {showWelcome && messages.length === 0 && workspace.visualizations.length === 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-6 py-8">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-cyan-500/30 mx-auto flex items-center justify-center">
-                  <Atom className="size-10 text-cyan-400" />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-bold text-white">Laboratoire Scientifique IA</h2>
-                  <p className="text-sm text-slate-400 max-w-lg mx-auto">
-                    Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D — et l&apos;IA génère la visualisation.
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2 max-w-xl mx-auto text-left">
-                  {[
-                    { ex: "Trace f(x) = x² − 4x + 3", icon: Sigma, desc: "Graphique de fonction", color: "text-indigo-400" },
-                    { ex: "Simule un projectile à 20 m/s", icon: Zap, desc: "Simulation physique", color: "text-amber-400" },
-                    { ex: "Montre-moi une molécule en 3D", icon: FlaskConical, desc: "Modèle 3D chimie", color: "text-purple-400" },
-                    { ex: "Construis un triangle ABC avec médiatrice", icon: Cpu, desc: "Géométrie dynamique", color: "text-emerald-400" },
-                    { ex: "Montre le système solaire", icon: Orbit, desc: "Astronomie interactive", color: "text-violet-400" },
-                    { ex: "Simule un circuit RC", icon: Zap, desc: "Électricité interactive", color: "text-cyan-400" },
-                  ].map((item, i) => (
-                    <button key={i} onClick={() => handleSend(item.ex)}
-                      className="flex items-start gap-3 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 text-left hover:bg-slate-800 hover:border-slate-600 transition-all">
-                      <item.icon className={`size-5 mt-0.5 flex-shrink-0 ${item.color}`} />
-                      <div>
-                        <p className="text-xs font-medium text-white">{item.desc}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{item.ex}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <ArrowDown className="size-5 text-slate-600 mx-auto mt-4 animate-bounce" />
-              </motion.div>
+              <LabChooser
+                onSelect={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
+                onAIOpen={() => { setShowWelcome(false); }}
+              />
             )}
 
             {/* Active visualization */}

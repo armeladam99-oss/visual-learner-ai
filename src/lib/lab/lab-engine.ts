@@ -286,7 +286,8 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
       /dessine?\s+(?:en\s+)?3[dD]\s+(?:la\s+)?(.+)/i,
       /montre?\s+(?:en\s+)?3[dD]\s+(?:la\s+)?(.+)/i,
       /plan\s+(?:xyz|3[dD])\s*(.+)/i,
-      /cr[ée]e?\s+(?:une?\s+)?(?:surface|solide|sph[èe]re|cube|c[ôo]ne|cylindre|carr[ée]|pyramide)\s+(.+)/i,
+      /cr[ée]e?\s+(?:une?\s+)?(?:surface|solide|sph[èe]re|cube|c[ôo]ne|cylindre|carr[ée]|pyramide|sc[èe]ne)\s+(.+)/i,
+      /cr[ée]e?\s+(?:une?\s+)?(?:sph[èe]re|cube|c[ôo]ne|cylindre|objets?)/i,
     ],
     priority: 13,
     handle: (msg) => {
@@ -305,13 +306,44 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
         };
       }
 
+      // Multi-object 3D scene: "Crée une sphère et un cube"
+      const multiMatch = msg.match(/cr[ée]e?\s+(.+?)(?:\s+et\s+(.+?))?(?:\s+dans|\s+dans|\s*$)/i);
+      if (multiMatch && lower.includes("et") && (lower.includes("sphere") || lower.includes("cube") || lower.includes("cylindre") || lower.includes("cone"))) {
+        const solids = lower.match(/(sph[èe]re|sphere|cube|c[ôo]ne|cone|cylindre|pyramide|prisme|tore)/gi) || [];
+        if (solids.length > 1) {
+          return {
+            success: true,
+            specs: [createVizSpec("math", "surface-3d", `Scène 3D : ${solids.join(", ")}`, {
+              solids: solids.map((s, i) => ({ type: s.toLowerCase().replace(/[èé]/g, "e"), position: [(i - (solids.length - 1) / 2) * 3, 0, 0] })),
+            }, [])],
+            sliders: [],
+            explanation: `**Scène 3D multi-objets :**\n${solids.map((s, i) => `• ${s}`).join("\n")}\n\nTourne et zoome avec la souris !`,
+          };
+        }
+      }
+
+      // Planet with moon
+      if (lower.includes("planète") || lower.includes("planete")) {
+        return {
+          success: true,
+          specs: [createVizSpec("astronomy", "solar-system", "Planète avec lune", {
+            planets: [
+              { name: "Planète", dist: 0, size: 1.5, color: "#3b82f6", speed: 0 },
+              { name: "Lune", dist: 0.39, size: 0.3, color: "#94a3b8", speed: 47.4, orbiting: true },
+            ],
+          }, [])],
+          sliders: [],
+          explanation: "**Planète avec lune en orbite**\nTourne et zoome !",
+        };
+      }
+
       // Solid in 3D
       if (lower.includes("solide") || lower.includes("cube") || lower.includes("sphère") || lower.includes("sphere") || lower.includes("cone") || lower.includes("cône") || lower.includes("cylindre") || lower.includes("pyramide") || lower.includes("prisme") || lower.includes("tore")) {
-        const solidMatch = msg.match(/(cube|sphère|sphere|cône|cone|cylindre|prisme|pyramide|tore)/i);
+        const solidMatch = msg.match(/(cube|sph[èe]re|sphere|c[ôo]ne|cone|cylindre|prisme|pyramide|tore)/i);
         return {
           success: true,
           specs: [createVizSpec("math", "surface-3d", `Solide : ${solidMatch?.[1] || "Cube"}`, {
-            solid: solidMatch?.[1]?.toLowerCase() || "cube", size: 1,
+            solid: solidMatch?.[1]?.toLowerCase()?.replace(/[èé]/g, "e") || "cube", size: 1,
           }, [])],
           sliders: [],
           explanation: `**Solide 3D :** ${solidMatch?.[1] || "Cube"}\nTourne et zoome avec la souris !`,
@@ -515,6 +547,35 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
   },
 
   // ═══════════════════════════════════════════════════════
+  // CHEMISTRY: Compare molecules
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "chemistry",
+    patterns: [
+      /compare\s+(\w+)\s+et\s+(\w+)/i,
+      /comparer\s+(\w+)\s+et\s+(\w+)/i,
+      /(\w+)\s+et\s+(\w+)\s+(?:c[ôo]te|ensemble|compar)/i,
+    ],
+    priority: 14,
+    handle: (msg) => {
+      const m = msg.match(/compare?\s+(\w+)\s+et\s+(\w+)/i)
+        || msg.match(/(\w+)\s+et\s+(\w+)\s+(?:c[ôo]te|ensemble|compar)/i);
+      const mol1 = m?.[1] || "H2O";
+      const mol2 = m?.[2] || "CO2";
+      return {
+        success: true,
+        specs: [
+          createVizSpec("chemistry", "molecule-3d", `${mol1} vs ${mol2}`, {
+            molecules: [mol1.toUpperCase(), mol2.toUpperCase()],
+          }, []),
+        ],
+        sliders: [],
+        explanation: `**Comparaison :** ${mol1.toUpperCase()} vs ${mol2.toUpperCase()}\nTourne les modèles pour les examiner !`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
   // CHEMISTRY: Molecule 3D
   // ═══════════════════════════════════════════════════════
   {
@@ -525,6 +586,7 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
       /mol[ée]cule\s+(?:de\s+)?(\w+)/i,
       /montre?r?\s+(?:moi\s+)?(?:la\s+)?structure\s+(?:de\s+)?(\w+)/i,
       /explique.*structure.*?(\w+)/i,
+      /montre?r?\s+(?:moi\s+)?(\w+)/i,
     ],
     priority: 12,
     handle: (msg) => {
@@ -534,7 +596,7 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
         || msg.match(/montre?r?\s+(?:moi\s+)?(?:la\s+)?(\w+)/i);
       let mol = molMatch?.[1]?.toUpperCase() || "H2O";
       // Normalize common molecule names
-      const molMap: Record<string, string> = { "ADN": "H2O", "DNA": "H2O" };
+      const molMap: Record<string, string> = { "ADN": "H2O", "DNA": "H2O", "EAU": "H2O", "METHANE": "CH4", "MÉTHANE": "CH4" };
       if (molMap[mol]) mol = molMap[mol];
       return {
         success: true,
