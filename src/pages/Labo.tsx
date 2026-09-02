@@ -268,15 +268,17 @@ export default function LaboPage() {
   }, [ctx.conversationHistory]);
 
   // Check API status on mount
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqStatusFn = (api as any).aiGroq?.apiStatus;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqStatusAction = groqStatusFn ? useAction(groqStatusFn) as (() => Promise<{ groq: boolean; gemini: boolean; connected: boolean }>) : null;
+
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const action = (api as any).aiChat?.apiStatus;
-        if (action) {
-          const statusAction = useAction(action);
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const result = await statusAction({});
-          setApiConnected(result.configured);
+        if (groqStatusAction) {
+          const result = await groqStatusAction();
+          setApiConnected(result.connected);
         } else {
           setApiConnected(false);
         }
@@ -285,9 +287,11 @@ export default function LaboPage() {
       }
     };
     checkApi();
-  }, []);
+  }, [groqStatusAction]);
 
   const chatAction = useAction(api.aiChat.chat);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqChatAction = useAction((api as any).aiGroq?.groqChat) as ((args: { messages: { role: string; content: string }[] }) => Promise<{ response: string; spec: unknown; graphData: unknown; analysis: unknown; error?: string; connected: boolean }>) | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const labSpecAction = useAction((api as any).aiLabSpec?.generateLabSpec) as ((args: { messages: { role: string; parts: { text: string }[] }[]; userMessage: string }) => Promise<{ response: string; spec: unknown; command: unknown; parameters: unknown; error?: string }>) | null;
 
@@ -352,8 +356,41 @@ export default function LaboPage() {
       return;
     }
 
-    // ─── STEP 4: Try Gemini LabSpec (structured) ───
+    // ─── STEP 4: Try AI (Groq → Gemini → local) ───
     try {
+      // ═══ STEP 4a: Try Groq/Llama (primary, free) ═══
+      if (groqChatAction) {
+        const groqMessages = [
+          ...ctx.conversationHistory.slice(-10).map((m) => ({
+            role: m.role === "user" ? "user" as const : "assistant" as const,
+            content: m.content,
+          })),
+          { role: "user" as const, content: query },
+        ];
+        const groqResult = await groqChatAction({ messages: groqMessages });
+
+        if (!groqResult.error) {
+          // If Groq returned a spec (visualization)
+          if (groqResult.spec && typeof groqResult.spec === "object") {
+            const validation = validateSpec(groqResult.spec);
+            if (validation.valid && validation.spec) {
+              setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: [], explanation: groqResult.response }));
+              setCurrentExplanation(groqResult.response || "");
+            }
+          }
+          const assistantMsg: Message = {
+            role: "assistant",
+            content: groqResult.response || "",
+            timestamp: new Date(),
+          };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setIsLoading(false);
+          return;
+        }
+        // Groq error — fall through to Gemini
+      }
+
+      // ═══ STEP 4b: Try Gemini LabSpec (structured) ═══
       const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query).map((m) => ({
         role: m.role,
         parts: m.parts,
@@ -436,7 +473,7 @@ export default function LaboPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, ctx, isLoading, chatAction, labSpecAction, workspace]);
+  }, [input, ctx, isLoading, chatAction, groqChatAction, labSpecAction, workspace]);
 
   function detectModeFromMessage(msg: string): AIMode {
     const lower = msg.toLowerCase();
