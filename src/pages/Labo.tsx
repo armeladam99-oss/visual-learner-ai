@@ -43,6 +43,9 @@ import {
 } from "@/lib/ai-engine";
 import type { LabVizSpec, LabSliderParam, LabWorkspace } from "@/lib/lab/lab-schema";
 import { labEngine, addToWorkspace, modifyVizSpec, createWorkspace } from "@/lib/lab/lab-engine";
+import { validateSpec } from "@/lib/lab/lab-validator";
+import { parseModification, applyCommand, type LabModCommand } from "@/lib/lab/lab-modifier";
+import { getMolecule } from "@/lib/lab/molecule-library";
 import { normalizeExpr } from "@/lib/viz-types";
 import { FunctionPlot2D } from "@/components/visual/FunctionPlot2D";
 import { Scene3DViewer } from "@/components/visual/Scene3DViewer";
@@ -54,7 +57,6 @@ import { AstronomyScene } from "@/components/lab/AstronomyScene";
 import { CircuitBuilder } from "@/components/lab/CircuitBuilder";
 import { MoleculeViewer } from "@/components/lab/MoleculeViewer";
 import { LabChooser } from "@/components/lab/LabChooser";
-import { getMolecule } from "@/lib/lab/molecule-library";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧪 OUTILS DU LABORATOIRE — Sidebar
@@ -257,12 +259,12 @@ export default function LaboPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [ctx.conversationHistory]);
-
-  const chatAction = useAction(api.aiChat.chat);
+  }, [ctx.conversationHistory]);  const chatAction = useAction(api.aiChat.chat);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const labSpecAction = useAction((api as any).aiLabSpec?.generateLabSpec) as ((args: { messages: { role: string; parts: { text: string }[] }[]; userMessage: string }) => Promise<{ response: string; spec: unknown; command: unknown; parameters: unknown }>) | null;
 
   // ═══════════════════════════════════════════════════════════
-  // ENVOI DE MESSAGE
+  // ENVOI DE MESSAGE — Pipeline : Patterns → Modifiers → Gemini LabSpec → Gemini Chat
   // ═══════════════════════════════════════════════════════════
 
   const handleSend = useCallback(async (text?: string) => {
@@ -276,108 +278,44 @@ export default function LaboPage() {
     setInput("");
     setIsLoading(true);
 
-    // ─── STEP 1: Try the lab engine ───
+    // ─── STEP 1: Try local pattern engine (fast, no API) ───
     const labResult = labEngine(query);
 
-    // Handle modification requests
-    if (labResult.error === "MODIFICATION_REQUEST" && workspace.visualizations.length > 0) {
-      const lower = query.toLowerCase();
-      const activeViz = workspace.visualizations.find((v) => v.id === workspace.activeVizId)
-        || workspace.visualizations[workspace.visualizations.length - 1];
-
-      if (activeViz) {
-        // Add function
-        const addMatch = lower.match(/ajoute?\s+(?:la\s+)?(?:courbe|fonction)\s+(.+?)(?:\s+au|\s+sur|\s*$)/i);
-        if (addMatch && (activeViz.type === "function-plot" || activeViz.type === "multi-function-plot" || activeViz.type === "derivative-plot")) {
-          const newExpr = normalizeExpr(addMatch[1]);
-          const prevFuncs = (activeViz.params.functions as string[]) || [(activeViz.params as Record<string, string>).expr];
-          const newParams = {
-            ...activeViz.params,
-            functions: [...prevFuncs, newExpr],
-            labels: [...((activeViz.params.labels as string[]) || ["f(x)"]), `h(x)`],
-            colors: [...((activeViz.params.colors as string[]) || ["#6366f1"]), "#10b981"],
-          };
-          setWorkspace((prev) => ({
-            ...prev,
-            visualizations: prev.visualizations.map((v) =>
-              v.id === activeViz.id ? { ...v, type: "multi-function-plot" as const, params: newParams, title: `${prevFuncs.length + 1} courbes` } : v
-            ),
-          }));
-          setCurrentExplanation(`**Ajout de :** ${newExpr}`);
-          const assistantMsg: Message = { role: "assistant", content: `📊 Courbe **${newExpr}** ajoutée !`, timestamp: new Date() };
+    // Handle modification results from pattern engine
+    if (labResult.error === "MODIFICATION_REQUEST") {
+      const modCmd = parseModification(query, workspace);
+      if (modCmd) {
+        const result = applyCommand(workspace, modCmd);
+        if (result.success) {
+          setWorkspace(result.workspace);
+          const assistantMsg: Message = { role: "assistant", content: `✅ ${result.message}`, timestamp: new Date() };
           setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
           setIsLoading(false);
           return;
         }
-
-        // Change range
-        const rangeMatch = lower.match(/(?:intervalle|plage)\s+(?:à\s*\[?)?(-?\d+)\s*(?:,|\s*(?:et|à))\s*(-?\d+)/i);
-        if (rangeMatch) {
-          const newMin = parseInt(rangeMatch[1]);
-          const newMax = parseInt(rangeMatch[2]);
-          setWorkspace((prev) => ({
-            ...prev,
-            visualizations: prev.visualizations.map((v) =>
-              v.id === activeViz.id ? { ...v, params: { ...v.params, xMin: newMin, xMax: newMax } } : v
-            ),
-          }));
-          setCurrentExplanation(`**Intervalle modifié :** [${newMin}, ${newMax}]`);
-          const assistantMsg: Message = { role: "assistant", content: `📊 Intervalle modifié à [${newMin}, ${newMax}]`, timestamp: new Date() };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
-          setIsLoading(false);
-          return;
-        }
-
-        // Change resistance
-        const resMatch = lower.match(/(?:r[ée]sistance|\bR\b)\s+(?:à\s*)?(\d+)\s*(kΩ|Ω|ohm)/i);
-        if (resMatch && activeViz.type === "circuit-rc") {
-          const newR = resMatch[2].toLowerCase().startsWith("k") ? parseFloat(resMatch[1]) * 1000 : parseFloat(resMatch[1]);
-          setWorkspace((prev) => ({
-            ...prev,
-            visualizations: prev.visualizations.map((v) =>
-              v.id === activeViz.id ? { ...v, params: { ...v.params, R: newR } } : v
-            ),
-          }));
-          setCurrentExplanation(`**Résistance modifiée :** R = ${newR} Ω`);
-          const assistantMsg: Message = { role: "assistant", content: `⚡ Résistance modifiée à ${newR} Ω`, timestamp: new Date() };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
-          setIsLoading(false);
-          return;
-        }
-
-        // Generic modification fallback
-        const assistantMsg: Message = { role: "assistant", content: `📊 Modifiée ! Décris ce que tu veux changer.`, timestamp: new Date() };
-        setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
-        setIsLoading(false);
-        return;
       }
+      // Fallback: try Gemini for modification
     }
 
+    // ─── STEP 2: If pattern matched, render visualization ───
     if (labResult.success && labResult.specs.length > 0) {
-      // Visualisation generated
       setWorkspace((prev) => addToWorkspace(prev, labResult));
       setCurrentExplanation(labResult.explanation);
-
       const assistantMsg: Message = {
         role: "assistant",
         content: `📊 **${labResult.specs[0].title}** générée !\n\n${labResult.explanation}`,
         timestamp: new Date(),
       };
-      setCtx((prev) => ({
-        ...prev,
-        conversationHistory: [...prev.conversationHistory, assistantMsg],
-        currentMode: "lab",
-      }));
+      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
       setIsLoading(false);
       return;
     }
 
-    // ─── STEP 2: Check for local experiment triggers ───
+    // ─── STEP 3: Check local experiment triggers ───
     const localResult = processMessage(query, ctx);
     const lower = query.toLowerCase();
-
     const isHintMode = ctx.currentExercise && ctx.learningMode === "help" &&
-      (lower.includes("indice") || lower.includes("hint") || lower.includes("aide") || lower.includes("suivant"));
+      (lower.includes("indice") || lower.includes("hint") || lower.includes("aide"));
 
     if (isHintMode) {
       const assistantMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), hints: localResult.hints };
@@ -386,19 +324,58 @@ export default function LaboPage() {
       return;
     }
 
-    if (localResult.experiment) {
-      const assistantMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), experiment: localResult.experiment };
-      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
-      setIsLoading(false);
-      return;
-    }
-
-    // ─── STEP 3: Everything else → Gemini ───
+    // ─── STEP 4: Try Gemini LabSpec (structured) ───
     try {
-      const systemPrompt = getSystemPrompt(ctx);
-      const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
-      const result = await chatAction({ messages: geminiMessages, systemPrompt });
+      const geminiMessages = buildGeminiMessages(ctx.conversationHistory, query).map((m) => ({
+        role: m.role,
+        parts: m.parts,
+      }));
 
+      // Try the LabSpec action (structured science response)
+      if (labSpecAction) {
+        const labSpecResult = await labSpecAction({ messages: geminiMessages, userMessage: query });
+
+        // If Gemini returned a command (modification)
+        if (labSpecResult.command && typeof labSpecResult.command === "object") {
+          const cmd = labSpecResult.command as LabModCommand;
+          const result = applyCommand(workspace, cmd);
+          if (result.success) {
+            setWorkspace(result.workspace);
+          }
+          const assistantMsg: Message = { role: "assistant", content: labSpecResult.response || result.message, timestamp: new Date() };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setIsLoading(false);
+          return;
+        }
+
+        // If Gemini returned a spec (new visualization)
+        if (labSpecResult.spec && typeof labSpecResult.spec === "object") {
+          const validation = validateSpec(labSpecResult.spec);
+          if (validation.valid && validation.spec) {
+            // Extract parameters from the result or auto-extract from spec
+            const params = (labSpecResult.parameters as import("@/lib/lab/lab-schema").LabParameter[]) || [];
+            setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: params, explanation: labSpecResult.response }));
+            setCurrentExplanation(labSpecResult.response || "");
+            const assistantMsg: Message = { role: "assistant", content: `📊 **${validation.spec.title}**\n\n${labSpecResult.response}`, timestamp: new Date() };
+            setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // If just a conversation response
+        if (labSpecResult.response && !labSpecResult.spec && !labSpecResult.command) {
+          const assistantMsg: Message = { role: "assistant", content: labSpecResult.response, timestamp: new Date() };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "general" }));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Fallback to regular Gemini chat
+      const systemPrompt = getSystemPrompt(ctx);
+      const regularGeminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
+      const result = await chatAction({ messages: regularGeminiMessages, systemPrompt });
       const assistantMsg: Message = { role: "assistant", content: result.response, timestamp: new Date() };
       setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: detectModeFromMessage(query) }));
     } catch {
@@ -407,7 +384,7 @@ export default function LaboPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, ctx, isLoading, chatAction]);
+  }, [input, ctx, isLoading, chatAction, labSpecAction, workspace]);
 
   function detectModeFromMessage(msg: string): AIMode {
     const lower = msg.toLowerCase();
