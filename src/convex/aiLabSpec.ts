@@ -147,13 +147,13 @@ export const generateLabSpec = action({
 
       if (!response.ok) {
         const error = await response.text();
-        console.error("Gemini API error:", response.status, error);
-        return {
-          response: `Erreur Gemini: ${response.status}`,
-          spec: null,
-          command: null,
-          parameters: null,
-        };
+        if (response.status === 429) {
+          return { response: "", error: "RATE_LIMITED", spec: null, command: null, parameters: null };
+        }
+        if (response.status === 400 || response.status === 403) {
+          return { response: "", error: "INVALID_KEY", spec: null, command: null, parameters: null };
+        }
+        return { response: "", error: `API_ERROR_${response.status}`, spec: null, command: null, parameters: null };
       }
 
       const data = await response.json();
@@ -186,10 +186,10 @@ export const generateLabSpec = action({
           parameters: null,
         };
       }
-    } catch (error) {
-      console.error("Gemini fetch error:", error);
+    } catch {
       return {
-        response: "Erreur de connexion à Gemini.",
+        response: "",
+        error: "NETWORK_ERROR",
         spec: null,
         command: null,
         parameters: null,

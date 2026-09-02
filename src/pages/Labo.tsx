@@ -259,12 +259,35 @@ export default function LaboPage() {
   const [currentExplanation, setCurrentExplanation] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [apiConnected, setApiConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [ctx.conversationHistory]);  const chatAction = useAction(api.aiChat.chat);
+  }, [ctx.conversationHistory]);
+
+  // Check API status on mount
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        const action = (api as any).aiChat?.apiStatus;
+        if (action) {
+          const statusAction = useAction(action);
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          const result = await statusAction({});
+          setApiConnected(result.configured);
+        } else {
+          setApiConnected(false);
+        }
+      } catch {
+        setApiConnected(false);
+      }
+    };
+    checkApi();
+  }, []);
+
+  const chatAction = useAction(api.aiChat.chat);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const labSpecAction = useAction((api as any).aiLabSpec?.generateLabSpec) as ((args: { messages: { role: string; parts: { text: string }[] }[]; userMessage: string }) => Promise<{ response: string; spec: unknown; command: unknown; parameters: unknown }>) | null;
+  const labSpecAction = useAction((api as any).aiLabSpec?.generateLabSpec) as ((args: { messages: { role: string; parts: { text: string }[] }[]; userMessage: string }) => Promise<{ response: string; spec: unknown; command: unknown; parameters: unknown; error?: string }>) | null;
 
   // ═══════════════════════════════════════════════════════════
   // ENVOI DE MESSAGE — Pipeline : Patterns → Modifiers → Gemini LabSpec → Gemini Chat
@@ -338,50 +361,74 @@ export default function LaboPage() {
       if (labSpecAction) {
         const labSpecResult = await labSpecAction({ messages: geminiMessages, userMessage: query });
 
-        // If Gemini returned a command (modification)
-        if (labSpecResult.command && typeof labSpecResult.command === "object") {
-          const cmd = labSpecResult.command as LabModCommand;
-          const result = applyCommand(workspace, cmd);
-          if (result.success) {
-            setWorkspace(result.workspace);
-          }
-          const assistantMsg: Message = { role: "assistant", content: labSpecResult.response || result.message, timestamp: new Date() };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
-          setIsLoading(false);
-          return;
-        }
-
-        // If Gemini returned a spec (new visualization)
-        if (labSpecResult.spec && typeof labSpecResult.spec === "object") {
-          const validation = validateSpec(labSpecResult.spec);
-          if (validation.valid && validation.spec) {
-            // Extract parameters from the result or auto-extract from spec
-            const params = (labSpecResult.parameters as import("@/lib/lab/lab-schema").LabParameter[]) || [];
-            setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: params, explanation: labSpecResult.response }));
-            setCurrentExplanation(labSpecResult.response || "");
-            const assistantMsg: Message = { role: "assistant", content: `📊 **${validation.spec.title}**\n\n${labSpecResult.response}`, timestamp: new Date() };
+        // If NO error from API, process the result
+        if (!labSpecResult.error) {
+          // Command (modification)
+          if (labSpecResult.command && typeof labSpecResult.command === "object") {
+            const cmd = labSpecResult.command as LabModCommand;
+            const result = applyCommand(workspace, cmd);
+            if (result.success) setWorkspace(result.workspace);
+            const assistantMsg: Message = { role: "assistant", content: labSpecResult.response || result.message, timestamp: new Date() };
             setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
             setIsLoading(false);
             return;
           }
-        }
 
-        // If just a conversation response
-        if (labSpecResult.response && !labSpecResult.spec && !labSpecResult.command) {
-          const assistantMsg: Message = { role: "assistant", content: labSpecResult.response, timestamp: new Date() };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "general" }));
-          setIsLoading(false);
-          return;
+          // Spec (new visualization)
+          if (labSpecResult.spec && typeof labSpecResult.spec === "object") {
+            const validation = validateSpec(labSpecResult.spec);
+            if (validation.valid && validation.spec) {
+              const params = (labSpecResult.parameters as import("@/lib/lab/lab-schema").LabParameter[]) || [];
+              setWorkspace((prev) => addToWorkspace(prev, { success: true, specs: [validation.spec!], sliders: params, explanation: labSpecResult.response }));
+              setCurrentExplanation(labSpecResult.response || "");
+              const assistantMsg: Message = { role: "assistant", content: `📊 **${validation.spec.title}**\n\n${labSpecResult.response}`, timestamp: new Date() };
+              setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+              setIsLoading(false);
+              return;
+            }
+          }
+
+          // Conversation response
+          if (labSpecResult.response && !labSpecResult.spec && !labSpecResult.command) {
+            const assistantMsg: Message = { role: "assistant", content: labSpecResult.response, timestamp: new Date() };
+            setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "general" }));
+            setIsLoading(false);
+            return;
+          }
         }
+        // If error, fall through to regular chat
       }
 
       // Fallback to regular Gemini chat
       const systemPrompt = getSystemPrompt(ctx);
       const regularGeminiMessages = buildGeminiMessages(ctx.conversationHistory, query);
       const result = await chatAction({ messages: regularGeminiMessages, systemPrompt });
-      const assistantMsg: Message = { role: "assistant", content: result.response, timestamp: new Date() };
-      setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: detectModeFromMessage(query) }));
+
+      // Handle chat errors
+      if (result.error) {
+        const errorMessages: Record<string, string> = {
+          NO_API_KEY: "⚠️ **Google API Key non configurée.**\n\nPour activer l'IA conversationale, ajoute `GOOGLE_API_KEY` dans les paramètres de clés API du projet.\n\nEn attendant, le laboratoire local fonctionne normalement avec toutes ses fonctions.",
+          INVALID_KEY: "⚠️ **Clé API invalide.** Vérifie que GOOGLE_API_KEY est correcte.",
+          RATE_LIMITED: "⏳ **Trop de requêtes.** Attends un moment puis réessaie.",
+          NETWORK_ERROR: "🌐 **Erreur de connexion.** Vérifie ta connexion internet.",
+        };
+        const errorMsg = errorMessages[result.error] || `⚠️ Erreur IA: ${result.error}`;
+        const assistantMsg: Message = { role: "assistant", content: errorMsg, timestamp: new Date() };
+        setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "general" }));
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.response) {
+        const assistantMsg: Message = { role: "assistant", content: result.response, timestamp: new Date() };
+        setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: detectModeFromMessage(query) }));
+      } else {
+        // No response at all — use local fallback
+        const fallbackMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), hints: localResult.hints };
+        setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, fallbackMsg], currentMode: localResult.mode }));
+      }
     } catch {
+      // Network error or unexpected — use local fallback
       const fallbackMsg: Message = { role: "assistant", content: localResult.response, timestamp: new Date(), hints: localResult.hints };
       setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, fallbackMsg], currentMode: localResult.mode }));
     } finally {
@@ -448,6 +495,12 @@ export default function LaboPage() {
             <FlaskConical className="size-5 text-cyan-400" />
             <span className="text-base font-bold text-white">🧪 Labo IA</span>
             <Badge variant="secondary" className="text-[10px] bg-cyan-500/10 text-cyan-400">2e BAC</Badge>
+            {apiConnected === true && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400">🟢 IA connectée</span>
+            )}
+            {apiConnected === false && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 text-amber-400">🔴 IA non configurée</span>
+            )}
             {messages.length > 0 && <ModeIndicator mode={ctx.currentMode} />}
           </div>
           <div className="flex items-center gap-2">

@@ -3,6 +3,10 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 
+// ═══════════════════════════════════════════════════════════════
+// 🤖 AI CHAT — Gemini conversation (server-side)
+// ═══════════════════════════════════════════════════════════════
+
 export const chat = action({
   args: {
     messages: v.array(
@@ -16,9 +20,11 @@ export const chat = action({
   handler: async (_ctx, args) => {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      throw new Error(
-        "GOOGLE_API_KEY not configured. Add it in the Keys/API keys tab."
-      );
+      return {
+        response: "",
+        error: "NO_API_KEY",
+        connected: false,
+      };
     }
 
     const model = "gemini-2.0-flash";
@@ -36,26 +42,78 @@ export const chat = action({
       },
     };
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // Rate limit
+        if (response.status === 429) {
+          return {
+            response: "",
+            error: "RATE_LIMITED",
+            connected: true,
+          };
+        }
+        // Invalid key
+        if (response.status === 400 || response.status === 403) {
+          return {
+            response: "",
+            error: "INVALID_KEY",
+            connected: false,
+          };
+        }
+        return {
+          response: "",
+          error: `API_ERROR_${response.status}`,
+          connected: true,
+        };
       }
-    );
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Gemini API error: ${response.status} - ${error}`);
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) {
+        return {
+          response: "",
+          error: "EMPTY_RESPONSE",
+          connected: true,
+        };
+      }
+
+      return {
+        response: text,
+        error: null,
+        connected: true,
+      };
+    } catch (fetchError) {
+      return {
+        response: "",
+        error: "NETWORK_ERROR",
+        connected: false,
+      };
     }
+  },
+});
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error("No response from Gemini API");
-    }
+// ═══════════════════════════════════════════════════════════════
+// 🟢 API STATUS — Check if GOOGLE_API_KEY is configured
+// ═══════════════════════════════════════════════════════════════
 
-    return { response: text };
+export const apiStatus = action({
+  args: {},
+  handler: async () => {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    return {
+      configured: !!apiKey,
+      keyPreview: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
+    };
   },
 });
