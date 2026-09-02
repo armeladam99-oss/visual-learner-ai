@@ -10,9 +10,12 @@ import type {
   LabSliderParam,
   LabDomain,
 } from "./lab-schema";
-import { createVizSpec, createSlider, generateVizId } from "./lab-schema";
-import { safeEval, normalizeExpr } from "../viz-types";
+import { createVizSpec, createSlider, generateVizId, generateId } from "./lab-schema";
+import { normalizeExpr } from "./lab-schema";
 import { extractParams } from "./lab-schema";
+
+// Re-import safeEval from schema (safe math)
+import { safeEval } from "./lab-schema";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧠 PATTERNS DE DÉTECTION PAR DOMAINE
@@ -795,16 +798,18 @@ export function createWorkspace(title = "Nouveau laboratoire"): LabWorkspace {
     title,
     visualizations: [],
     sliders: [],
+    parameters: [],
     history: [],
     activeVizId: null,
+    commands: [],
   };
 }
 
 export function addToWorkspace(ws: LabWorkspace, result: LabEngineResult): LabWorkspace {
   if (!result.success || result.specs.length === 0) return ws;
   const newViz = result.specs[0];
-  const existingKeys = new Set(ws.sliders.map((s) => s.key));
-  const newSliders = result.sliders.filter((s) => !existingKeys.has(s.key));
+  const existingKeys = new Set(ws.sliders.map((s) => s.id));
+  const newSliders = result.sliders.filter((s) => !existingKeys.has(s.id));
   return {
     ...ws,
     visualizations: [...ws.visualizations, newViz],

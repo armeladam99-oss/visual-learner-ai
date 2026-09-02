@@ -1,2 +1,2 @@
 export * from "./lab-schema";
-export * from "./lab-engine";
+export { labEngine, createWorkspace, addToWorkspace as addToWorkspaceEngine, modifyVizSpec } from "./lab-engine";

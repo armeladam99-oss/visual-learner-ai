@@ -435,7 +435,7 @@ export default function LaboPage() {
         visualizations: prev.visualizations.map((v) =>
           v.id === vizId ? { ...v, params: { ...v.params, [key]: value } } : v
         ),
-        sliders: prev.sliders.map((s) => s.key === key ? { ...s, current: value } : s),
+        sliders: prev.sliders.map((s) => s.id === key ? { ...s, value } : s),
       };
     });
   };
@@ -539,18 +539,18 @@ export default function LaboPage() {
                       <CardContent className="p-3 space-y-2">
                         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Paramètres</p>
                         {workspace.sliders.map((s) => (
-                          <div key={s.key} className="flex items-center gap-2">
+                          <div key={s.id} className="flex items-center gap-2">
                             <span className="text-[10px] text-slate-400 w-12">{s.symbol}</span>
                             <Slider
                               min={s.min} max={s.max} step={s.step}
-                              value={[s.current]}
-                              onValueChange={([v]) => handleSliderChange(activeViz.id, s.key, v)}
+                              value={[s.value]}
+                              onValueChange={([v]) => handleSliderChange(activeViz.id, s.id, v)}
                               className="flex-1 [&_[role=slider]]:bg-cyan-500"
                             />
                             <Input
                               type="number"
-                              value={s.current}
-                              onChange={(e) => handleSliderChange(activeViz.id, s.key, parseFloat(e.target.value) || s.default)}
+                              value={s.value}
+                              onChange={(e) => handleSliderChange(activeViz.id, s.id, parseFloat(e.target.value) ?? s.value)}
                               className="w-16 h-6 text-[10px] bg-slate-800 border-slate-700 text-white text-center"
                             />
                             <span className="text-[10px] text-slate-500 w-8">{s.unit}</span>
