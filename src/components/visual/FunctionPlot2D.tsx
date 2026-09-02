@@ -149,19 +149,37 @@ export function FunctionPlot2D({ viz, onModify }: FunctionPlot2DProps) {
         </div>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
-        {/* Equation display */}
+        {/* Equation display — editable */}
         <div className="flex flex-wrap gap-2">
           {exprs.map((expr, i) => (
             <div
               key={i}
-              className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold border"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-mono font-bold border"
               style={{
                 color: colors[i],
                 borderColor: `${colors[i]}33`,
                 backgroundColor: `${colors[i]}11`,
               }}
             >
-              {labels[i]}(x) = {expr}
+              <span className="text-[10px] opacity-70">{labels[i]}(x)=</span>
+              <input
+                type="text"
+                value={expr}
+                onChange={(e) => {
+                  if (!onModify) return;
+                  const newExprs = [...exprs];
+                  newExprs[i] = e.target.value;
+                  onModify({
+                    params: {
+                      ...viz.params,
+                      functions: newExprs.length > 1 ? newExprs : undefined,
+                      expr: newExprs.length === 1 ? newExprs[0] : viz.params.expr,
+                    },
+                  });
+                }}
+                className="bg-transparent border-none outline-none text-xs font-mono font-bold w-32"
+                style={{ color: colors[i] }}
+              />
             </div>
           ))}
         </div>

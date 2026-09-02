@@ -126,9 +126,11 @@ function Sidebar({
 function VizRenderer({
   spec,
   onParamChange,
+  onSpecChange,
 }: {
   spec: LabVizSpec;
   onParamChange?: (key: string, value: number) => void;
+  onSpecChange?: (mods: Partial<LabVizSpec>) => void;
 }) {
   const vizRequest = {
     type: spec.type as never,
@@ -140,13 +142,13 @@ function VizRenderer({
 
   switch (spec.domain) {
     case "math":
-      if (spec.type === "function-plot" || spec.type === "multi-function-plot" || spec.type === "derivative-plot") {
-        return <FunctionPlot2D viz={vizRequest} />;
+      if (spec.type === "function-plot" || spec.type === "multi-function-plot" || spec.type === "derivative-plot") {        return <FunctionPlot2D viz={vizRequest} onModify={(mods) => onSpecChange?.({ params: mods.params })} />;
       }
       if (spec.type === "surface-3d" || spec.type === "curve-3d" || spec.type === "vector-field-3d") {
         return <Scene3DViewer viz={vizRequest} />;
       }
-      return <FunctionPlot2D viz={vizRequest} />;
+      return <FunctionPlot2D viz={vizRequest} onModify={(mods) => onSpecChange?.({ params: mods.params })} />;
+
 
     case "physics":
       return <PhysicsSimulation viz={vizRequest} />;
@@ -563,19 +565,9 @@ export default function LaboPage() {
               <LabWelcome
                 onSubmit={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
                 onDomainClick={(domain) => {
-                  const examples: Record<string, string> = {
-                    math: "Trace f(x) = x²",
-                    physics: "Simule un projectile à 20 m/s",
-                    chemistry: "Montre H2O en 3D",
-                    "3d": "Crée une sphère",
-                    biology: "Montre une cellule végétale",
-                    electricity: "Construis un circuit avec une résistance",
-                    geometry: "Construis un triangle ABC",
-                    astronomy: "Montre le système solaire",
-                    data: "Statistiques : 12 25 18 32 40",
-                  };
-                  setShowWelcome(false);
-                  handleSend(examples[domain] || `Montre quelque chose en ${domain}`);
+                  // Just select the domain for the component palette — do NOT auto-send
+                  setSelectedDomain(domain);
+                  setSidebarCollapsed(false);
                 }}
               />
             )}
@@ -585,7 +577,36 @@ export default function LaboPage() {
               {activeViz && (
                 <motion.div key={activeViz.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   className="space-y-3">
-                  <VizRenderer spec={activeViz} onParamChange={(key, val) => handleSliderChange(activeViz.id, key, val)} />
+
+                  {/* Modification command bar */}
+                  <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700/40 rounded-xl px-3 py-2">
+                    <Sparkles className="size-3.5 text-cyan-400 flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Modifier votre laboratoire... (ajoute, supprime, change, compare...)"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }}
+                      className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
+                    />
+                    <Button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isLoading}
+                      size="sm"
+                      className="size-7 p-0 bg-cyan-600 hover:bg-cyan-500"
+                    >
+                      {isLoading ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />}
+                    </Button>
+                  </div>
+
+                  <VizRenderer spec={activeViz} onParamChange={(key, val) => handleSliderChange(activeViz.id, key, val)} onSpecChange={(mods) => {
+                    setWorkspace((prev) => ({
+                      ...prev,
+                      visualizations: prev.visualizations.map((v) =>
+                        v.id === activeViz.id ? { ...v, ...mods, params: { ...v.params, ...(mods.params || {}) } } : v
+                      ),
+                    }));
+                  }} />
 
                   {/* Workspace Panel: Components + Parameters */}
                   <Card className="border-slate-700/50 bg-slate-900/50">
@@ -662,7 +683,7 @@ export default function LaboPage() {
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               <Textarea
-                placeholder="Décris ce que tu veux voir — graphique, simulation, schéma, modèle 3D..."
+                placeholder="Écris une équation, une expérience, une simulation, une construction 3D ou une question scientifique..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="min-h-[44px] text-sm resize-none bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"

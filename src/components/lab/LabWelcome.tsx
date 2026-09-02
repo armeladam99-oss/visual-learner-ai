@@ -26,15 +26,13 @@ const DOMAIN_CHIPS = [
 ];
 
 const PLACEHOLDER_EXAMPLES = [
-  "Décris ton expérience...",
-  "Construis ton circuit...",
-  "Crée une scène 3D...",
-  "Étudie une fonction...",
-  "Trace f(x) = x² − 4x + 3",
-  "Simule un projectile à 20 m/s",
-  "Montre-moi H₂O en 3D",
-  "Construis un circuit RC",
-  "Crée un pendule avec L=2m",
+  "Écris une équation, une expérience, une simulation, une construction 3D ou une question scientifique...",
+  "Trace f(x)=x²-3x+2",
+  "Crée un circuit avec une pile de 9V et une résistance de 100Ω",
+  "Montre une molécule d'eau en 3D",
+  "Simule un projectile à 20 m/s avec un angle de 45°",
+  "Crée une scène 3D avec une sphère et un cube",
+  "Étudie les racines de x²-5x+6",
   "Compare sin(x) et cos(x)",
 ];
 
