@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, Sparkles, Brain, Atom, FlaskConical, Calculator, Lightbulb, ChevronDown } from "lucide-react";
+import { Bot, Send, Sparkles, Brain, Atom, FlaskConical, Calculator, Lightbulb, ChevronDown, Loader2, Wifi, WifiOff } from "lucide-react";
+import { useAction } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface ExpertProfile {
   name: string;
@@ -368,6 +370,30 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const expert = experts[subjectKey];
+  const [aiConnected, setAiConnected] = useState<boolean | null>(null);
+
+  // AI backend actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqChatAction = useAction((api as any).aiGroq?.groqChat) as ((args: { messages: { role: string; content: string }[] }) => Promise<{ response: string; spec: unknown; error?: string; connected: boolean }>) | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqStatusAction = useAction((api as any).aiGroq?.apiStatus) as (() => Promise<{ groq: boolean; gemini: boolean; connected: boolean }>) | null;
+
+  // Check API status on mount
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        if (groqStatusAction) {
+          const result = await groqStatusAction();
+          setAiConnected(result.connected);
+        } else {
+          setAiConnected(false);
+        }
+      } catch {
+        setAiConnected(false);
+      }
+    };
+    checkApi();
+  }, [groqStatusAction]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -399,7 +425,7 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
     return bestScore > 0 ? bestMatch : null;
   };
 
-  const handleSend = (text?: string) => {
+  const handleSend = useCallback(async (text?: string) => {
     const query = text || input.trim();
     if (!query) return;
 
@@ -414,17 +440,51 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
     setIsTyping(true);
     setShowSuggestions(false);
 
-    setTimeout(() => {
-      const match = findBestResponse(query);
+    // Try real AI first (Groq/Llama)
+    if (groqChatAction) {
+      try {
+        const recentMessages = messages.slice(-10).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+        const systemContext = `Tu es ${expert.name}, ${expert.title}. Tu es un professeur IA pour les élèves de 2e année Bac au Maroc. Tu maîtrises ${expert.expertise.join(", ")}. Sois pédagogique, patient, et explique étape par étape. Utilise des emojis avec modération. Réponds toujours en français.`;
 
-      let response: string;
-      let followUp: string[] | undefined;
+        const groqMessages = [
+          { role: "user" as const, content: `[SYSTEM] ${systemContext}` },
+          { role: "assistant" as const, content: "Compris, je suis prêt à aider !" },
+          ...recentMessages,
+          { role: "user" as const, content: query },
+        ];
 
-      if (match) {
-        response = match.response;
-        followUp = match.followUp;
-      } else {
-        response = `Excellente question ! En tant que **${expert.name}**, voici mon analyse :
+        const result = await groqChatAction({ messages: groqMessages });
+
+        if (!result.error && result.response) {
+          const assistantMessage: Message = {
+            role: "assistant",
+            content: result.response,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          setIsTyping(false);
+          setAiConnected(true);
+          return;
+        }
+      } catch {
+        // Fall through to local knowledge base
+      }
+    }
+
+    // Fallback: local knowledge base (fast, no API needed)
+    const match = findBestResponse(query);
+
+    let response: string;
+    let followUp: string[] | undefined;
+
+    if (match) {
+      response = match.response;
+      followUp = match.followUp;
+    } else {
+      response = `Excellente question ! En tant que **${expert.name}**, voici mon analyse :
 
 La question "${query}" touche un point important du programme. Je te conseille de :
 
@@ -432,23 +492,20 @@ La question "${query}" touche un point important du programme. Je te conseille d
 2. **Examiner les graphiques interactifs** ci-dessus
 3. **Tester ta compréhension** avec le mini-test
 
-Pour des questions très spécifiques, n'hésite pas à reformuler ta demande avec des mots-clés du cours (comme "formule", "graphique", "démonstration", etc.).
+Pour des questions très spécifiques, n'hésite pas à reformuler ta demande avec des mots-clés du cours (comme "formule", "graphique", "démonstration", etc.).`;
+      followUp = ["Reformule ma question", "Résume les formules clés"];
+    }
 
-🎓 *LeProf IA est en mode V1 — de nouvelles connaissances seront ajoutées prochainement !*`;
-        followUp = ["Reformule ma question", "Résume les formules clés"];
-      }
+    const assistantMessage: Message = {
+      role: "assistant",
+      content: response,
+      followUp,
+      timestamp: new Date(),
+    };
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: response,
-        followUp,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 700);
-  };
+    setMessages((prev) => [...prev, assistantMessage]);
+    setIsTyping(false);
+  }, [input, messages, expert, groqChatAction]);
 
   const initialSuggestions = [
     "Explique-moi les formules essentielles",
@@ -483,6 +540,8 @@ Pour des questions très spécifiques, n'hésite pas à reformuler ta demande av
               </div>
               <p className="text-xs font-normal text-muted-foreground mt-0.5">
                 {expert.title} • {expert.expertise.join(" · ")}
+                {aiConnected === true && <span className="ml-2 text-emerald-500">🟢 IA connectée</span>}
+                {aiConnected === false && <span className="ml-2 text-amber-500">🔴 IA hors ligne</span>}
               </p>
             </div>
           </CardTitle>
@@ -637,7 +696,7 @@ Pour des questions très spécifiques, n'hésite pas à reformuler ta demande av
             <div className="flex items-center justify-between">
               <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                 <Brain className="size-3" />
-                IA adaptée au programme de {subject}
+                {aiConnected === true ? "IA connectée — réponses en temps réel" : aiConnected === false ? "Mode hors ligne — réponses locales" : "Vérification de l'IA..."}
               </p>
               <Button
                 onClick={() => handleSend()}
@@ -647,7 +706,10 @@ Pour des questions très spécifiques, n'hésite pas à reformuler ta demande av
                 style={{ backgroundColor: expert.color }}
               >
                 {isTyping ? (
-                  <span className="animate-pulse">Réflexion...</span>
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Réflexion...
+                  </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Send className="size-3.5" />

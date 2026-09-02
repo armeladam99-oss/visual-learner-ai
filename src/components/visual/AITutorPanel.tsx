@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, Send, Sparkles, Loader2 } from "lucide-react";
+import { useAction } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const suggestedQuestions = [
   "Explique-moi la dérivée de cette fonction",
@@ -23,18 +25,43 @@ export function AITutorPanel({ subject }: AITutorPanelProps) {
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<{ role: string; content: string }[]>([]);
 
-  const handleSend = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groqChatAction = useAction((api as any).aiGroq?.groqChat) as ((args: { messages: { role: string; content: string }[] }) => Promise<{ response: string; error?: string; connected: boolean }>) | null;
+
+  const handleSend = useCallback(async () => {
     if (!message.trim()) return;
     setLoading(true);
-    // Simulate AI response for V1
-    setTimeout(() => {
-      setResponse(
-        `En tant que professeur IA, je peux t'expliquer "${message}" en détail. Cette fonctionnalité sera bientôt disponible avec une IA réelle. Pour le moment, explore les cours et visualisations interactives ci-dessus ! 🎓`
-      );
-      setLoading(false);
-    }, 1000);
-  };
+    const userMessage = message.trim();
+    setMessage("");
+
+    if (groqChatAction) {
+      try {
+        const newHistory = [
+          { role: "user" as const, content: `[SYSTEM] Tu es un professeur IA pour ${subject}. Sois pédagogique, précis, et explique étape par étape en français.` },
+          { role: "assistant" as const, content: "Compris, je suis prêt !" },
+          ...history,
+          { role: "user" as const, content: userMessage },
+        ];
+        const result = await groqChatAction({ messages: newHistory });
+        if (!result.error && result.response) {
+          setResponse(result.response);
+          setHistory((prev) => [...prev.slice(-10), { role: "user", content: userMessage }, { role: "assistant", content: result.response }]);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // Fall through to local response
+      }
+    }
+
+    // Local fallback
+    setResponse(
+      `En tant que professeur IA, je peux t'expliquer "${userMessage}" en détail. Pour des réponses plus précises, configure GROQ_API_KEY dans les paramètres. Pour le moment, explore les cours et visualisations interactives ci-dessus ! 🎓`
+    );
+    setLoading(false);
+  }, [message, history, subject, groqChatAction]);
 
   return (
     <motion.div
@@ -91,7 +118,8 @@ export function AITutorPanel({ subject }: AITutorPanelProps) {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="animate-pulse">Réflexion...</span>
+                <Loader2 className="size-3.5 animate-spin" />
+                Réflexion...
               </span>
             ) : (
               <span className="flex items-center gap-2">

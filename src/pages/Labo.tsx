@@ -494,8 +494,8 @@ export default function LaboPage() {
       // Handle chat errors
       if (result.error) {
         const errorMessages: Record<string, string> = {
-          NO_API_KEY: "⚠️ **Gemini non configuré.** L'IA Groq/Llama est disponible. Si tu veux aussi Gemini, ajoute `GOOGLE_API_KEY`.",
-          INVALID_KEY: "⚠️ **Clé API invalide.** Vérifie que GOOGLE_API_KEY est correcte.",
+          NO_API_KEY: "⚠️ **Gemini non configuré.** L'IA fonctionne en mode local avec des réponses prédéfinies. Pour une IA avancée, configure GROQ_API_KEY ou GOOGLE_API_KEY.",
+          INVALID_KEY: "⚠️ **Clé API Gemini invalide.** Vérifie GOOGLE_API_KEY dans les paramètres.",
           RATE_LIMITED: "⏳ **Trop de requêtes.** Attends un moment puis réessaie.",
           NETWORK_ERROR: "🌐 **Erreur de connexion.** Vérifie ta connexion internet.",
         };
