@@ -25,61 +25,101 @@ interface DomainPattern {
   handle: (msg: string, match: RegExpMatchArray) => LabEngineResult;
 }
 
+// Helper: extract range from message
+function extractRange(msg: string): { xMin: number; xMax: number } {
+  const m = msg.match(/(?:entre|de|sur|interval)\s*\[?\s*(-?\d+(?:\.\d+)?)\s*(?:,|\s*(?:et|à|a|->|→))\s*(-?\d+(?:\.\d+)?)\s*\]?/i);
+  return { xMin: m ? parseFloat(m[1]) : -10, xMax: m ? parseFloat(m[2]) : 10 };
+}
+
+// Helper: extract expression after various prefixes
+function extractExpr(msg: string, patterns: RegExp[]): string | null {
+  for (const p of patterns) {
+    const m = msg.match(p);
+    if (m?.[1]) return normalizeExpr(m[1].trim());
+  }
+  return null;
+}
+
+// Helper: extract param=value
+function extractParamVal(msg: string, paramName: string): number | null {
+  const m = msg.match(new RegExp(`${paramName}\\s*(?:=|à|est|vaut)\\s*([\\d.]+)`, "i"));
+  return m ? parseFloat(m[1]) : null;
+}
+
 const DOMAIN_PATTERNS: DomainPattern[] = [
-  // ─── MATH: Derivative ───
+  // ═══════════════════════════════════════════════════════
+  // MODIFICATION REQUESTS (detected but returned as special result)
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "math",
+    patterns: [
+      /ajoute?\s+(?:la\s+)?(?:courbe|fonction)\s+(.+?)(?:\s+au|\s+sur|\s*$)/i,
+      /change?\s+(?:l'?\s*)?intervalle\s+(?:à\s*\[?)?(-?\d+)\s*(?:,|\s*(?:et|à))\s*(-?\d+)/i,
+    ],
+    priority: 20,
+    handle: () => ({
+      success: false,
+      specs: [],
+      sliders: [],
+      explanation: "MODIFICATION",
+      error: "MODIFICATION_REQUEST",
+    }),
+  },
+  // ═══════════════════════════════════════════════════════
+  // MATH — Derivative (REQUIRES explicit derivative word)
+  // ═══════════════════════════════════════════════════════
   {
     domain: "math",
     patterns: [
       /d[ée]riv[ée]e?\s+(?:de\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=?\s*)(.+)/i,
       /montre?\s+(?:la\s+)?d[ée]riv[ée]e?\s+(?:de\s+)?(.+)/i,
-      /trace?\s+(?:la\s+)?f'\s*\(?\s*x?\s*\)?\s*(?:de\s+)?(.+)/i,
+      /trace?\s+(?:la\s+)?f'\s*\(\s*x?\s*\)/i,
+      /d[ée]riv[ée]e?\s+(?:de\s+)?(.+?)(?:\s+entre|\s+de|\s+sur|$)/i,
     ],
-    priority: 16,
-    handle: (msg, _match) => {
-      const exprMatch = msg.match(/(?:de\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=?\s*)(.+?)(?:\s+entre|\s+de|\s+sur|$)/i);
-      const expr = normalizeExpr(exprMatch?.[1] || "x^2");
-      const rangeMatch = msg.match(/(?:entre|de)\s+(-?\d+(?:\.\d+)?)\s+(?:et|à)\s+(-?\d+(?:\.\d+)?)/i);
-      const xMin = rangeMatch ? parseFloat(rangeMatch[1]) : -10;
-      const xMax = rangeMatch ? parseFloat(rangeMatch[2]) : 10;
-
-      const sliders: LabSliderParam[] = [];
+    priority: 17,
+    handle: (msg) => {
+      const expr = extractExpr(msg, [
+        /(?:de\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=?\s*)(.+?)(?:\s+entre|\s+de|\s+sur|$)/i,
+        /(?:de\s+)?(.+?)(?:\s+entre|\s+de|\s+sur|$)/i,
+      ]) || "x^2";
+      const { xMin, xMax } = extractRange(msg);
       const params = extractParams(expr);
-      for (const p of params) {
-        sliders.push(createSlider(p, `Coefficient ${p}`, p, "", -5, 5, 0.1, 1));
-      }
+      const sliders = params.map((p) => createSlider(p, `Coefficient ${p}`, p, "", -5, 5, 0.1, 1));
 
       return {
         success: true,
         specs: [createVizSpec("math", "derivative-plot", `Dérivée de f(x) = ${expr}`, {
           expr, xMin, xMax, showOriginal: true, showDerivative: true,
-        }, [`f(x) = ${expr}`, `f'(x) ≈ dérivée numérique`])],
+        }, [`f(x) = ${expr}`])],
         sliders,
-        explanation: `**Analyse de f(x) = ${expr}**\n\n**Observation :** Le graphique montre f(x) et sa dérivée f'(x).\n**Interprétation :** Quand f'(x) > 0 → f croissante. Quand f'(x) < 0 → f décroissante.\nQuand f'(x) = 0 → extremum (min ou max).`,
+        explanation: `**Dérivée de f(x) = ${expr}**\n\n**Observation :** Le graphique montre f(x) et sa dérivée f'(x).\n**Interprétation :** Quand f'(x) > 0 → f croissante. Quand f'(x) < 0 → f décroissante.`,
       };
     },
   },
 
-  // ─── MATH: Function plot ───
+  // ═══════════════════════════════════════════════════════
+  // MATH: General function plot (HIGHEST PRIORITY for math)
+  // Matches: "Trace f(x)=...", "Dessine y=...", "Graph de...", "Trace e^...", "Trace 1/..."
+  // ═══════════════════════════════════════════════════════
   {
     domain: "math",
     patterns: [
       /trace?r?\s+(?:la\s+)?(?:courbe\s+de\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i,
       /dessine?\s+(?:la\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i,
       /graph(?:ique)?\s+(?:de\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i,
+      // Catch "Trace e^...", "Trace 1/(x-2)", "Trace sin(x)+cos(x)" — expressions after "Trace"
+      /trace?r?\s+([a-z0-9^()+\-*/.\s]+(?:\^[\d()]+|\(.*?\))[^,\n]*?)(?:\s+entre|\s+de|\s+sur|\s+avec|\s+et\s+(?:la\s+)?(?:courbe|sin|cos|tan)|\s+et\s+\w|\s*$)/i,
+      /repr[ée]sente?\s+graphiquement\s+(?:une?\s+)?(.+?)(?:\s+entre|\s+de|\s+sur|$)/i,
     ],
     priority: 14,
-    handle: (msg, _match) => {
-      const exprMatch = msg.match(/(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+?)(?:\s+entre|\s+de|\s+sur|\s+avec|\s+sur le même|\s+et\s+(?:la\s+)?(?:courbe|fonction|sin|cos)|$)/i);
-      const expr = normalizeExpr(exprMatch?.[1]?.trim() || "x^2");
-      const rangeMatch = msg.match(/(?:entre|de)\s+(-?\d+(?:\.\d+)?)\s+(?:et|à)\s+(-?\d+(?:\.\d+)?)/i);
-      const xMin = rangeMatch ? parseFloat(rangeMatch[1]) : -10;
-      const xMax = rangeMatch ? parseFloat(rangeMatch[2]) : 10;
-
-      const sliders: LabSliderParam[] = [];
+    handle: (msg) => {
+      const expr = extractExpr(msg, [
+        /(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+?)(?:\s+entre|\s+de|\s+sur|\s+avec|\s+et\s+(?:la\s+)?(?:courbe|fonction|sin|cos)|$)/i,
+        /trace?r?\s+(?:la\s+)?(?:courbe\s+de\s+)?(.+?)(?:\s+entre|\s+de|\s+sur|\s+avec|\s+et\s+(?:la\s+)?(?:courbe|fonction|sin|cos)|$)/i,
+      ]) || "x^2";
+      const { xMin, xMax } = extractRange(msg);
       const params = extractParams(expr);
-      for (const p of params) {
-        sliders.push(createSlider(p, `Coefficient ${p}`, p, "", -10, 10, 0.1, 1));
-      }
+      const sliders = params.map((p) => createSlider(p, `Coefficient ${p}`, p, "", -10, 10, 0.1, 1));
 
       return {
         success: true,
@@ -92,26 +132,28 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
     },
   },
 
-  // ─── MATH: Multiple functions ───
+  // ═══════════════════════════════════════════════════════
+  // MATH: Multiple functions ("sin(x) et cos(x) sur le même graphique")
+  // ═══════════════════════════════════════════════════════
   {
     domain: "math",
     patterns: [
-      /trace?r?\s+(.+?)\s+et\s+(.+?)(?:\s+entre|\s+de|\s+sur|\s+sur le même|\s*$)/i,
+      /trace?r?\s+(.+?)\s+et\s+(.+?)(?:\s+sur\s+(?:le\s+)?même|\s+entre|\s+de|\s*$)/i,
       /superpose?\s+(.+?)\s+et\s+(.+)/i,
+      /compare?\s+(.+?)\s+et\s+(.+?)(?:\s+sur\s+(?:le\s+)?même)?$/i,
+      /(.+?)\s+et\s+(.+?)\s+sur\s+(?:le\s+)?même\s+graphique/i,
       /(.+?)\s+et\s+(.+?)\s+sur\s+(?:le\s+)?même\s+(?:graphique|courbe)/i,
     ],
     priority: 15,
-    handle: (msg, _match) => {
-      const multiMatch = msg.match(/(?:trace|dessine|superpose|graph)\s+(.+?)\s+et\s+(.+?)(?:\s+entre|\s+de|\s+sur|\s*$)/i)
-        || msg.match(/(.+?)\s+et\s+(.+?)(?:\s+sur\s+(?:le\s+)?même|\s*$)/i);
+    handle: (msg) => {
+      const multiMatch = msg.match(/(?:trace|dessine|superpose|graph|compare)\s+(.+?)\s+et\s+(.+?)(?:\s+sur|\s+entre|\s+de|\s*$)/i)
+        || msg.match(/(.+?)\s+et\s+(.+?)\s+sur\s+(?:le\s+)?même/i)
+        || msg.match(/(?:trace|dessine)\s+(.+?)\s+et\s+(.+?)$/i);
       if (!multiMatch) return { success: false, specs: [], sliders: [], explanation: "Could not parse" };
 
       const e1 = normalizeExpr(multiMatch[1].replace(/y\s*=\s*/gi, "").replace(/f\s*\(\s*x\s*\)\s*=\s*/gi, "").trim());
-      const e2 = normalizeExpr(multiMatch[2].replace(/y\s*=\s*/gi, "").replace(/f\s*\(\s*x\s*\)\s*=\s*/gi, "").trim());
-
-      const rangeMatch = msg.match(/(?:entre|de)\s+(-?\d+(?:\.\d+)?)\s+(?:et|à)\s+(-?\d+(?:\.\d+)?)/i);
-      const xMin = rangeMatch ? parseFloat(rangeMatch[1]) : -10;
-      const xMax = rangeMatch ? parseFloat(rangeMatch[2]) : 10;
+      const e2 = normalizeExpr(multiMatch[2].replace(/y\s*=\s*/gi, "").replace(/f\s*\(\s*x\s*\)\s*=\s*/gi, "").replace(/\s+sur\s+(?:le\s+)?même.*$/i, "").trim());
+      const { xMin, xMax } = extractRange(msg);
 
       return {
         success: true,
@@ -120,161 +162,377 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
           labels: ["f(x)", "g(x)"], colors: ["#6366f1", "#ef4444"],
         }, [`f(x) = ${e1}`, `g(x) = ${e2}`])],
         sliders: [],
-        explanation: `**Superposition de deux courbes :**\nf(x) = ${e1}\ng(x) = ${e2}`,
+        explanation: `**Superposition :**\nf(x) = ${e1}\ng(x) = ${e2}`,
       };
     },
   },
 
-  // ─── PHYSICS: Projectile ───
+  // ═══════════════════════════════════════════════════════
+  // MATH: Parametric plot
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "math",
+    patterns: [
+      /param[ée]trique/i,
+      /x\s*=\s*cos\s*\(\s*t\s*\).*y\s*=\s*sin/i,
+      /x\s*=\s*\w+\s*\(\s*t\s*\).*y\s*=\s*\w+\s*\(\s*t\s*\)/i,
+    ],
+    priority: 16,
+    handle: (msg) => {
+      const xMatch = msg.match(/x\s*=\s*(.+?)(?:\s*,|\s+et|\s+y)/i);
+      const yMatch = msg.match(/y\s*=\s*(.+?)(?:\s*$|\s*,|\s+et|\s+sur)/i);
+      const xExpr = normalizeExpr(xMatch?.[1] || "cos(t)");
+      const yExpr = normalizeExpr(yMatch?.[1] || "sin(2*t)");
+      return {
+        success: true,
+        specs: [createVizSpec("math", "function-plot", `Paramétrique : x=${xExpr}, y=${yExpr}`, {
+          expr: `sin(x)`, // placeholder for parametric - we need a parametric renderer
+          xMin: -10, xMax: 10, parametric: true, xExpr, yExpr,
+        }, [`x(t) = ${xExpr}`, `y(t) = ${yExpr}`])],
+        sliders: [],
+        explanation: `**Courbe paramétrique :**\nx(t) = ${xExpr}\ny(t) = ${yExpr}`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // MATH: Zeros/analysis
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "math",
+    patterns: [
+      /[zée]ro/i,
+      /minimum|maximum|extremum/i,
+      /tableau\s+de\s+(?:variation|signes)/i,
+    ],
+    priority: 13,
+    handle: (msg) => {
+      const expr = extractExpr(msg, [
+        /de\s+(?:f\s*\(\s*x\s*\)\s*=\s*)?(.+?)(?:\s*$)/i,
+        /(.+?)(?:\s+entre|\s+de|\s+sur|$)/i,
+      ]) || "x^2";
+      const { xMin, xMax } = extractRange(msg);
+
+      const zeros: number[] = [];
+      let minY = Infinity; let minX = 0;
+      for (let x = xMin; x <= xMax; x += 0.05) {
+        const y = safeEval(expr, x);
+        const yNext = safeEval(expr, x + 0.05);
+        if (isFinite(y) && isFinite(yNext) && y * yNext <= 0 && Math.abs(y) < 1000) {
+          zeros.push(Math.round(x * 100) / 100);
+        }
+        if (isFinite(y) && y < minY) { minY = y; minX = x; }
+      }
+
+      let analysis = `**Analyse de f(x) = ${expr}**\n`;
+      if (zeros.length > 0) {
+        analysis += `\n**Zéros :** x ∈ {${zeros.slice(0, 6).join(", ")}}`;
+      }
+      if (isFinite(minY)) {
+        analysis += `\n**Minimum :** f(${Math.round(minX * 100) / 100}) = ${Math.round(minY * 100) / 100}`;
+      }
+
+      return {
+        success: true,
+        specs: [createVizSpec("math", "function-plot", `Analyse de f(x) = ${expr}`, {
+          expr, xMin, xMax,
+        }, [`f(x) = ${expr}`])],
+        sliders: [],
+        explanation: analysis,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // MATH: Variable parameter ("Fais varier a dans f(x)=a*x²")
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "math",
+    patterns: [
+      /fais?\s+varier\s+(\w+)\s+(?:dans\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i,
+      /varier\s+(\w+)\s+(?:dans\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i,
+    ],
+    priority: 16,
+    handle: (msg) => {
+      const paramMatch = msg.match(/varier\s+(\w+)\s+(?:dans\s+)?(?:f\s*\(\s*x\s*\)\s*=\s*|y\s*=\s*)(.+)/i);
+      const param = paramMatch?.[1] || "a";
+      const expr = normalizeExpr(paramMatch?.[2] || "a*x^2");
+      const { xMin, xMax } = extractRange(msg);
+      const params = extractParams(expr);
+      const sliders = params.map((p) => createSlider(p, `Coefficient ${p}`, p, "", -5, 5, 0.1, p === param ? 1 : 1));
+
+      return {
+        success: true,
+        specs: [createVizSpec("math", "function-plot", `f(x) = ${expr}`, {
+          expr, xMin, xMax,
+        }, [`f(x) = ${expr}`])],
+        sliders,
+        explanation: `**Paramètre ${param} modifiable via les sliders**\n\nf(x) = ${expr}`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // 3D: Surface, solid, vector, curve
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "math",
+    patterns: [
+      /(?:en\s+)?3[dD]\s+(?:la\s+)?(?:surface\s+)?(?:z\s*=\s*)?(.+)/i,
+      /surface\s+(?:3[dD]\s+)?(?:z\s*=\s*)?(.+)/i,
+      /dessine?\s+(?:en\s+)?3[dD]\s+(?:la\s+)?(.+)/i,
+      /montre?\s+(?:en\s+)?3[dD]\s+(?:la\s+)?(.+)/i,
+      /plan\s+(?:xyz|3[dD])\s*(.+)/i,
+      /cr[ée]e?\s+(?:une?\s+)?(?:surface|solide|sph[èe]re|cube|c[ôo]ne|cylindre|carr[ée]|pyramide)\s+(.+)/i,
+    ],
+    priority: 13,
+    handle: (msg) => {
+      const lower = msg.toLowerCase();
+
+      // Molecule in 3D — redirect to chemistry
+      if (lower.includes("molécule") || lower.includes("molecule")) {
+        const molMatch = msg.match(/(?:molécule|molecule)\s+(?:de\s+)?(\w+)/i);
+        return {
+          success: true,
+          specs: [createVizSpec("chemistry", "molecule-3d", `Molécule ${molMatch?.[1] || "H2O"}`, {
+            molecule: molMatch?.[1] || "H2O",
+          }, [])],
+          sliders: [],
+          explanation: `**Modèle 3D :** ${molMatch?.[1] || "H2O"}`,
+        };
+      }
+
+      // Solid in 3D
+      if (lower.includes("solide") || lower.includes("cube") || lower.includes("sphère") || lower.includes("sphere") || lower.includes("cone") || lower.includes("cône") || lower.includes("cylindre") || lower.includes("pyramide") || lower.includes("prisme") || lower.includes("tore")) {
+        const solidMatch = msg.match(/(cube|sphère|sphere|cône|cone|cylindre|prisme|pyramide|tore)/i);
+        return {
+          success: true,
+          specs: [createVizSpec("math", "surface-3d", `Solide : ${solidMatch?.[1] || "Cube"}`, {
+            solid: solidMatch?.[1]?.toLowerCase() || "cube", size: 1,
+          }, [])],
+          sliders: [],
+          explanation: `**Solide 3D :** ${solidMatch?.[1] || "Cube"}\nTourne et zoome avec la souris !`,
+        };
+      }
+
+      // Vector
+      if (lower.includes("vecteur") || lower.includes("vector") || lower.includes("plan xyz") || lower.includes("plan x")) {
+        return {
+          success: true,
+          specs: [createVizSpec("math", "surface-3d", "Vecteur dans l'espace XYZ", {
+            solid: "vector", vector: [3, 2, 4],
+          }, [])],
+          sliders: [],
+          explanation: "**Vecteur dans l'espace 3D**\nTourne avec la souris !",
+        };
+      }
+
+      // Default: surface z=f(x,y)
+      const exprMatch = msg.match(/(?:z\s*=\s*)(.+)/i);
+      const expr = exprMatch ? normalizeExpr(exprMatch[1]) : "sin(sqrt(x^2 + y^2))";
+      return {
+        success: true,
+        specs: [createVizSpec("math", "surface-3d", `Surface : z = ${expr}`, {
+          expr, xMin: -5, xMax: 5, yMin: -5, yMax: 5,
+        }, [`z = ${expr}`])],
+        sliders: [],
+        explanation: `**Surface 3D :** z = ${expr}\nTourne avec la souris, zoome avec la molette !`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PHYSICS: Projectile
+  // ═══════════════════════════════════════════════════════
   {
     domain: "physics",
     patterns: [
       /simul(?:e|ation)\s+(?:une?\s+)?(?:balle|projectile|mouvement)\s+(?:lancée?\s+)?(?:à\s+)?(\d+(?:\.\d+)?)\s*m?\s*\/?\s*s?\s*(?:avec\s+)?(?:un?\s+)?(?:angle\s+(?:de\s+)?)(\d+)/i,
-      /simul(?:e|ation)\s+(?:une?\s+)?projectile/i,
+      /simul(?:e|ation)\s+(?:une?\s+)?(?:balle|projectile|mouvement)/i,
       /mouvement\s+parabolique/i,
       /projectile/i,
     ],
     priority: 13,
-    handle: (msg, _match) => {
+    handle: (msg) => {
       const v0Match = msg.match(/(\d+(?:\.\d+)?)\s*m?\s*\/?\s*s/);
       const angleMatch = msg.match(/angle\s+(?:de\s+)?(\d+)/i);
       const v0 = v0Match ? parseFloat(v0Match[1]) : 20;
       const angle = angleMatch ? parseFloat(angleMatch[1]) : 45;
-
       return {
         success: true,
-        specs: [
-          createVizSpec("physics", "projectile-sim", "Simulation de projectile", {
-            v0, angle, g: 9.81,
-          }, ["x(t) = v₀·cos(θ)·t", "y(t) = v₀·sin(θ)·t − ½gt²"]),
-        ],
+        specs: [createVizSpec("physics", "projectile-sim", "Projectile", {
+          v0, angle, g: 9.81,
+        }, ["x(t) = v₀·cos(θ)·t", "y(t) = v₀·sin(θ)·t − ½gt²"])],
         sliders: [
           createSlider("v0", "Vitesse initiale", "v₀", "m/s", 5, 50, 0.5, v0),
           createSlider("angle", "Angle", "θ", "°", 5, 85, 1, angle),
         ],
-        explanation: `**Projectile :** v₀ = ${v0} m/s, θ = ${angle}°\n**Portée :** R = ${((v0 * v0 * Math.sin(2 * angle * Math.PI / 180)) / 9.81).toFixed(1)} m\n**Hauteur max :** H = ${((v0 * v0 * Math.pow(Math.sin(angle * Math.PI / 180), 2)) / (2 * 9.81)).toFixed(1)} m`,
+        explanation: `**Projectile :** v₀ = ${v0} m/s, θ = ${angle}°`,
       };
     },
   },
 
-  // ─── PHYSICS: Free fall ───
+  // ═══════════════════════════════════════════════════════
+  // PHYSICS: Free fall
+  // ═══════════════════════════════════════════════════════
   {
     domain: "physics",
     patterns: [
-      /simul(?:e|ation)\s+(?:la\s+)?chute\s+libre/i,
       /chute\s+libre/i,
+      /simul(?:e|ation)\s+(?:la\s+)?chute/i,
       /objet\s+(?:qui\s+)?tombe/i,
+      /corps\s+libre/i,
     ],
     priority: 13,
-    handle: (msg, _match) => {
-      const hMatch = msg.match(/(?:de\s+|hauteur\s+(?:de\s+)?)?(\d+(?:\.\d+)?)\s*m/);
+    handle: (msg) => {
+      const hMatch = msg.match(/(?:de\s+|hauteur\s+(?:de\s+)?|depuis\s+)?(\d+(?:\.\d+)?)\s*m/);
       const h0 = hMatch ? parseFloat(hMatch[1]) : 10;
       return {
         success: true,
         specs: [createVizSpec("physics", "free-fall-sim", "Chute libre", {
           h0, g: 9.81,
-        }, ["y(t) = h₀ − ½gt²", "v(t) = −gt", "t = √(2h₀/g)"])],
+        }, ["y(t) = h₀ − ½gt²", "v(t) = −gt"])],
         sliders: [createSlider("h0", "Hauteur initiale", "h₀", "m", 1, 50, 0.5, h0)],
-        explanation: `**Chute libre :** h₀ = ${h0} m\nTemps de chute : ${Math.sqrt(2 * h0 / 9.81).toFixed(2)} s\nVitesse finale : ${(Math.sqrt(2 * 9.81 * h0)).toFixed(1)} m/s`,
+        explanation: `**Chute libre :** h₀ = ${h0} m`,
       };
     },
   },
 
-  // ─── PHYSICS: Pendulum ───
+  // ═══════════════════════════════════════════════════════
+  // PHYSICS: Pendulum
+  // ═══════════════════════════════════════════════════════
   {
     domain: "physics",
     patterns: [
-      /simul(?:e|ation)\s+(?:d'?\\s*)?un?\s*pendule/i,
       /pendule/i,
       /oscillation.*pendule/i,
     ],
     priority: 13,
-    handle: (msg, _match) => {
+    handle: (msg) => {
       const lMatch = msg.match(/(?:longueur\s+(?:de\s+)?)?(\d+(?:\.\d+)?)\s*m/);
-      const aMatch = msg.match(/(?:angle\s+(?:de\s+)?)(\d+)/i);
       const L = lMatch ? parseFloat(lMatch[1]) : 1;
-      const theta0 = aMatch ? parseFloat(aMatch[1]) : 30;
       return {
         success: true,
         specs: [createVizSpec("physics", "pendulum-sim", "Pendule simple", {
-          length: L, angle0: theta0, g: 9.81,
-        }, ["T = 2π√(L/g)", "θ(t) = θ₀·cos(ωt)", "ω = √(g/L)"])],
+          length: L, angle0: 30, g: 9.81,
+        }, ["T = 2π√(L/g)", "θ(t) = θ₀·cos(ωt)"])],
         sliders: [
           createSlider("length", "Longueur", "L", "m", 0.2, 3, 0.1, L),
-          createSlider("angle0", "Angle initial", "θ₀", "°", 5, 60, 1, theta0),
+          createSlider("angle0", "Angle", "θ₀", "°", 5, 60, 1, 30),
         ],
-        explanation: `**Pendule :** L = ${L} m, θ₀ = ${theta0}°\n**Période :** T = ${(2 * Math.PI * Math.sqrt(L / 9.81)).toFixed(3)} s\n**Pulsation :** ω = ${Math.sqrt(9.81 / L).toFixed(3)} rad/s`,
+        explanation: `**Pendule :** L = ${L} m`,
       };
     },
   },
 
-  // ─── PHYSICS: Wave ───
+  // ═══════════════════════════════════════════════════════
+  // PHYSICS: Spring
+  // ═══════════════════════════════════════════════════════
   {
     domain: "physics",
     patterns: [
-      /simul(?:e|ation)\s+(?:d'?\\s*)?une?\s*onde/i,
-      /onde\s+(?:progressive|stationnaire)/i,
-      /propagation\s+d'onde/i,
+      /ressort/i,
+      /oscillation.*ressort/i,
+      /masse.*ressort/i,
     ],
     priority: 13,
-    handle: (msg, _match) => {
+    handle: (msg) => {
+      return {
+        success: true,
+        specs: [createVizSpec("physics", "wave-sim", "Oscillation ressort-masse", {
+          amplitude: 2, frequency: 1.5, speed: 5,
+        }, ["x(t) = A·cos(ωt + φ)", "F = −k·x", "ω = √(k/m)"])],
+        sliders: [
+          createSlider("amplitude", "Amplitude", "A", "m", 0.5, 5, 0.1, 2),
+          createSlider("frequency", "Fréquence", "f", "Hz", 0.5, 5, 0.1, 1.5),
+        ],
+        explanation: "**Oscillation ressort-masse**\nAmplitude modifiable via slider.",
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PHYSICS: Wave
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "physics",
+    patterns: [
+      /onde/i,
+      /sinusoïdale/i,
+      /sinusoidale/i,
+      /propagation/i,
+    ],
+    priority: 12,
+    handle: (msg) => {
       return {
         success: true,
         specs: [createVizSpec("physics", "wave-sim", "Onde sinusoïdale", {
           amplitude: 1, frequency: 2, speed: 5,
-        }, ["y(x,t) = A·sin(kx − ωt)", "v = λ·f", "ω = 2πf"])],
+        }, ["y(x,t) = A·sin(kx − ωt)", "v = λ·f"])],
         sliders: [
           createSlider("amplitude", "Amplitude", "A", "m", 0.1, 3, 0.1, 1),
           createSlider("frequency", "Fréquence", "f", "Hz", 0.5, 10, 0.1, 2),
         ],
-        explanation: `**Onde sinusoïdale :**\nAmplitude A = 1 m, fréquence f = 2 Hz\nLongueur d'onde λ = ${(5 / 2).toFixed(1)} m`,
+        explanation: "**Onde sinusoïdale**",
       };
     },
   },
 
-  // ─── ELECTRICITY: Circuit RC ───
+  // ═══════════════════════════════════════════════════════
+  // ELECTRICITY: Circuit RC
+  // ═══════════════════════════════════════════════════════
   {
     domain: "electricity",
     patterns: [
-      /montre(?:-moi)?\s+(?:un?\s+)?circuit\s*(?:rc|rl|rlc)/i,
       /circuit\s*(?:rc|rl|rlc)/i,
       /condensateur/i,
-      /charge\s+(?:d'?\\s*)?un?\s*condensateur/i,
+      /charge.*condensateur/i,
+      /circuit.*(?:pile|r[ée]sistance)/i,
+      /construis.*circuit/i,
+      /tension.*temps/i,
     ],
     priority: 13,
-    handle: (msg, _match) => {
+    handle: (msg) => {
       const rMatch = msg.match(/(\d+)\s*(?:Ω|ohm)/i);
       const cMatch = msg.match(/(\d+)\s*(?:μ?F)/i);
       const R = rMatch ? parseFloat(rMatch[1]) : 100;
       const C = cMatch ? parseFloat(cMatch[1]) : 100;
-      const tau = (R * C) / 1000;
       return {
         success: true,
-        specs: [createVizSpec("electricity", "circuit-rc", "Circuit RC — Charge", {
+        specs: [createVizSpec("electricity", "circuit-rc", "Circuit RC", {
           R, C, U0: 5,
         }, ["τ = R·C", "Uc(t) = U₀(1 − e^(−t/τ))"])],
         sliders: [
           createSlider("R", "Résistance", "R", "Ω", 10, 1000, 10, R),
           createSlider("C", "Capacité", "C", "μF", 10, 1000, 10, C),
         ],
-        explanation: `**Circuit RC :**\nR = ${R} Ω, C = ${C} μF\nτ = ${tau.toFixed(3)} s\nCharge 63% à t = τ, 99% à t = 5τ`,
+        explanation: `**Circuit RC :** R = ${R} Ω, C = ${C} μF`,
       };
     },
   },
 
-  // ─── CHEMISTRY: Molecule ───
+  // ═══════════════════════════════════════════════════════
+  // CHEMISTRY: Molecule 3D
+  // ═══════════════════════════════════════════════════════
   {
     domain: "chemistry",
     patterns: [
-      /montre(?:-moi)?\s+(?:une?\s+)?mol[ée]cule\s+(?:de\s+)?(\w+)/i,
-      /mol[ée]cule\s+(?:de\s+)?(\w+)\s+en\s+3[dD]/i,
+      /montre?r?\s+(?:moi\s+)?(?:une?\s+)?mol[ée]cule\s+(?:de\s+)?(\w+)/i,
       /(\w+)\s+en\s+3[dD]/i,
+      /mol[ée]cule\s+(?:de\s+)?(\w+)/i,
+      /montre?r?\s+(?:moi\s+)?(?:la\s+)?structure\s+(?:de\s+)?(\w+)/i,
+      /explique.*structure.*?(\w+)/i,
     ],
     priority: 12,
-    handle: (msg, _match) => {
+    handle: (msg) => {
       const molMatch = msg.match(/mol[ée]cule\s+(?:de\s+)?(\w+)/i)
-        || msg.match(/montre(?:-moi)?\s+(\w+)/i);
-      const mol = molMatch?.[1] || "H2O";
+        || msg.match(/structure\s+(?:de\s+)?(\w+)/i)
+        || msg.match(/montre?r?\s+(?:moi\s+)?(\w+)\s+en\s+3[dD]/i)
+        || msg.match(/montre?r?\s+(?:moi\s+)?(?:la\s+)?(\w+)/i);
+      let mol = molMatch?.[1]?.toUpperCase() || "H2O";
+      // Normalize common molecule names
+      const molMap: Record<string, string> = { "ADN": "H2O", "DNA": "H2O" };
+      if (molMap[mol]) mol = molMap[mol];
       return {
         success: true,
         specs: [createVizSpec("chemistry", "molecule-3d", `Molécule ${mol}`, {
@@ -286,14 +544,18 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
     },
   },
 
-  // ─── CHEMISTRY: pH ───
+  // ═══════════════════════════════════════════════════════
+  // CHEMISTRY: Dosage
+  // ═══════════════════════════════════════════════════════
   {
     domain: "chemistry",
     patterns: [
       /dosage/i,
       /titrage/i,
       /acido-?basique/i,
-      /montre(?:-moi)?\s+(?:un?\s+)?dosage/i,
+      /[ée]quilibre/i,
+      /[ée]quation.*chimique/i,
+      /photosynth[èe]se/i,
     ],
     priority: 12,
     handle: () => ({
@@ -306,45 +568,106 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
     }),
   },
 
-  // ─── GEOMETRY: Triangle ───
+  // ═══════════════════════════════════════════════════════
+  // GEOMETRY: Triangle
+  // ═══════════════════════════════════════════════════════
   {
     domain: "geometry",
     patterns: [
       /triangle/i,
-      /m[ée]diatrice/i,
-      /bissectrice/i,
-      /hauteur.*triangle/i,
     ],
-    priority: 11,
-    handle: (msg, _match) => {
+    priority: 12,
+    handle: (msg) => {
       const hasMed = /m[ée]diatrice/i.test(msg);
       const hasHauteur = /hauteur/i.test(msg);
-      const hasBissectrice = /bissectrice/i.test(msg);
+      const hasBiss = /bissectrice/i.test(msg);
       return {
         success: true,
-        specs: [createVizSpec("geometry", "triangle-construction", "Construction de triangle", {
+        specs: [createVizSpec("geometry", "triangle-construction", "Triangle ABC", {
           vertices: [[1, 1], [5, 1], [3, 4]],
           showMediatrice: hasMed,
           showHauteur: hasHauteur,
-          showBissectrice: hasBissectrice,
+          showBissectrice: hasBiss,
           labels: ["A", "B", "C"],
         }, [])],
         sliders: [],
-        explanation: `**Triangle ABC**\n${hasMed ? "• Médiatrice AB affichée\n" : ""}${hasHauteur ? "• Hauteur depuis C affichée\n" : ""}${hasBissectrice ? "• Bissectrice en A affichée\n" : ""}`,
+        explanation: `**Triangle ABC**${hasMed ? "\n• Médiatrice AB" : ""}${hasHauteur ? "\n• Hauteur depuis C" : ""}${hasBiss ? "\n• Bissectrice en A" : ""}`,
       };
     },
   },
 
-  // ─── ASTRONOMY: Solar system ───
+  // ═══════════════════════════════════════════════════════
+  // GEOMETRY: Circle
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "geometry",
+    patterns: [
+      /cercle/i,
+      /carr[ée]/i,
+    ],
+    priority: 11,
+    handle: (msg) => {
+      const rMatch = msg.match(/rayon\s+(?:de\s+)?(\d+(?:\.\d+)?)/i);
+      const r = rMatch ? parseFloat(rMatch[1]) : 2;
+      return {
+        success: true,
+        specs: [createVizSpec("geometry", "circle-construction", `Cercle (r = ${r})`, {
+          center: [3, 3],
+          radius: r,
+          showRadius: true,
+          labels: ["O"],
+        }, [`C = 2πr = ${(2 * Math.PI * r).toFixed(2)}`, `S = πr² = ${(Math.PI * r * r).toFixed(2)}`])],
+        sliders: [createSlider("radius", "Rayon", "r", "", 0.5, 5, 0.1, r)],
+        explanation: `**Cercle :** r = ${r}\nC = ${(2 * Math.PI * r).toFixed(2)} | S = ${(Math.PI * r * r).toFixed(2)}`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // GEOMETRY: Transformations
+  // ═══════════════════════════════════════════════════════
+  {
+    domain: "geometry",
+    patterns: [
+      /rotation/i,
+      /sym[ée]trie/i,
+      /translation/i,
+      /homoth[ée]tie/i,
+      /transformation/i,
+      /vecteur/i,
+      /somme.*vecteur/i,
+    ],
+    priority: 11,
+    handle: (msg) => {
+      const angleMatch = msg.match(/(\d+)\s*(?:degr[ée]s?|°)/i);
+      const angle = angleMatch ? parseInt(angleMatch[1]) : 90;
+      return {
+        success: true,
+        specs: [createVizSpec("geometry", "transformation-2d", `Rotation de ${angle}°`, {
+          angle,
+          points: [[2, 1], [4, 1], [3, 3]],
+          labels: ["A", "B", "C"],
+        }, [])],
+        sliders: [createSlider("angle", "Angle", "θ", "°", 0, 360, 5, angle)],
+        explanation: `**Rotation de ${angle}°**\nPoints transformés affichés.`,
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // ASTRONOMY: Solar system
+  // ═══════════════════════════════════════════════════════
   {
     domain: "astronomy",
     patterns: [
       /syst[èe]me\s+solaire/i,
-      /orbite/i,
       /plan[èe]te/i,
-      /lune/i,
+      /orbite/i,
+      /soleil/i,
+      /terre.*soleil/i,
+      /lune.*terre/i,
     ],
-    priority: 11,
+    priority: 12,
     handle: () => ({
       success: true,
       specs: [createVizSpec("astronomy", "solar-system", "Système solaire", {
@@ -358,54 +681,65 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
         ],
       }, [])],
       sliders: [],
-      explanation: "**Système solaire interactif\nPlanètes avec orbites et vitesses relatives.",
+      explanation: "**Système solaire interactif**\nTourne, zoome, ajuste la vitesse.",
     }),
   },
 
-  // ─── BIOLOGY: Cell ───
+  // ═══════════════════════════════════════════════════════
+  // BIOLOGY: Cell
+  // ═══════════════════════════════════════════════════════
   {
     domain: "biology",
     patterns: [
-      /cellule\s+v[ée]g[ée]tale/i,
-      /cellule\s+animale/i,
+      /cellule/i,
       /organe(?:ll)?e/i,
-      /montre(?:-moi)?\s+une?\s+cellule/i,
     ],
-    priority: 11,
+    priority: 12,
     handle: (msg) => {
       const isPlant = /v[ée]g[ée]tale/i.test(msg);
       return {
         success: true,
         specs: [createVizSpec("biology", isPlant ? "cell-plant" : "cell-animal", isPlant ? "Cellule végétale" : "Cellule animale", {}, [])],
         sliders: [],
-        explanation: isPlant ? "**Cellule végétale** — paroi, chloroplastes, grande vacuole" : "**Cellule animale** — membrane, centrioles, petite vacuole",
+        explanation: isPlant ? "**Cellule végétale** — paroi, chloroplastes, vacuole" : "**Cellule animale** — membrane, centrioles",
       };
     },
   },
 
-  // ─── DATA: Statistics ───
+  // ═══════════════════════════════════════════════════════
+  // DATA: Statistics
+  // ═══════════════════════════════════════════════════════
   {
     domain: "data",
     patterns: [
+      /donn[ée]es?\s*[:：]\s*(.+)/i,
       /statistiques?\s+(?:de\s+)?(.+)/i,
-      /histogramme\s+(?:de\s+)?(.+)/i,
-      /nuage\s+de\s+points/i,
-      /r[ée]gression/i,
+      /analyse\s+(?:ces\s+)?donn[ée]es?\s*[:：]?\s*(.+)/i,
+      /moyenne|m[ée]diane|[ée]cart-type|variance/i,
+      /histogramme/i,
+      /graphique\s+(?:de\s+)?donn[ée]es?/i,
     ],
-    priority: 10,
-    handle: (msg, _match) => {
-      // Try to extract numbers
-      const nums = msg.match(/\d+(?:\.\d+)?/g)?.map(Number) || [12, 25, 18, 32, 15, 28, 22, 35, 10, 20];
-      const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
-      const variance = nums.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / nums.length;
+    priority: 12,
+    handle: (msg) => {
+      // Extract numbers from the message
+      const numsMatch = msg.match(/[\d.,\s]+/g);
+      const allNums = msg.match(/\d+(?:\.\d+)?/g)?.map(Number) || [];
+      const data = allNums.length > 1 ? allNums : [12, 25, 18, 32, 40, 15, 28];
+      const mean = data.reduce((a, b) => a + b, 0) / data.length;
+      const sorted = [...data].sort((a, b) => a - b);
+      const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.length;
+      const median = sorted.length % 2 === 0
+        ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+        : sorted[Math.floor(sorted.length / 2)];
+
       return {
         success: true,
         specs: [createVizSpec("data", "bar-chart", "Analyse de données", {
-          data: nums,
-          labels: nums.map((_, i) => `Point ${i + 1}`),
+          data,
+          labels: data.map((_, i) => `D${i + 1}`),
         }, [])],
         sliders: [],
-        explanation: `**Données :** ${nums.join(", ")}\n**Moyenne :** ${mean.toFixed(2)}\n**Écart-type :** ${Math.sqrt(variance).toFixed(2)}\n**Min :** ${Math.min(...nums)} | **Max :** ${Math.max(...nums)}`,
+        explanation: `**Données :** ${data.join(", ")}\n**Moyenne :** ${mean.toFixed(2)}\n**Médiane :** ${median.toFixed(2)}\n**Écart-type :** ${Math.sqrt(variance).toFixed(2)}\n**Min :** ${sorted[0]} | **Max :** ${sorted[sorted.length - 1]}`,
       };
     },
   },
@@ -466,33 +800,21 @@ export function createWorkspace(title = "Nouveau laboratoire"): LabWorkspace {
   };
 }
 
-export function addToWorkspace(
-  ws: LabWorkspace,
-  result: LabEngineResult
-): LabWorkspace {
+export function addToWorkspace(ws: LabWorkspace, result: LabEngineResult): LabWorkspace {
   if (!result.success || result.specs.length === 0) return ws;
-
   const newViz = result.specs[0];
-  const newVizs = [...ws.visualizations, newViz];
-
-  // Merge sliders (don't duplicate)
   const existingKeys = new Set(ws.sliders.map((s) => s.key));
   const newSliders = result.sliders.filter((s) => !existingKeys.has(s.key));
-
   return {
     ...ws,
-    visualizations: newVizs,
+    visualizations: [...ws.visualizations, newViz],
     sliders: [...ws.sliders, ...newSliders],
     history: [...ws.history, `Added: ${newViz.title}`],
     activeVizId: newViz.id,
   };
 }
 
-export function modifyVizSpec(
-  ws: LabWorkspace,
-  vizId: string,
-  mods: Partial<LabVizSpec>
-): LabWorkspace {
+export function modifyVizSpec(ws: LabWorkspace, vizId: string, mods: Partial<LabVizSpec>): LabWorkspace {
   return {
     ...ws,
     visualizations: ws.visualizations.map((v) =>

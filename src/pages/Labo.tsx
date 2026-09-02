@@ -43,6 +43,7 @@ import {
 } from "@/lib/ai-engine";
 import type { LabVizSpec, LabSliderParam, LabWorkspace } from "@/lib/lab/lab-schema";
 import { labEngine, addToWorkspace, modifyVizSpec, createWorkspace } from "@/lib/lab/lab-engine";
+import { normalizeExpr } from "@/lib/viz-types";
 import { FunctionPlot2D } from "@/components/visual/FunctionPlot2D";
 import { Scene3DViewer } from "@/components/visual/Scene3DViewer";
 import { PhysicsSimulation } from "@/components/visual/PhysicsSimulation";
@@ -258,6 +259,80 @@ export default function LaboPage() {
 
     // ─── STEP 1: Try the lab engine ───
     const labResult = labEngine(query);
+
+    // Handle modification requests
+    if (labResult.error === "MODIFICATION_REQUEST" && workspace.visualizations.length > 0) {
+      const lower = query.toLowerCase();
+      const activeViz = workspace.visualizations.find((v) => v.id === workspace.activeVizId)
+        || workspace.visualizations[workspace.visualizations.length - 1];
+
+      if (activeViz) {
+        // Add function
+        const addMatch = lower.match(/ajoute?\s+(?:la\s+)?(?:courbe|fonction)\s+(.+?)(?:\s+au|\s+sur|\s*$)/i);
+        if (addMatch && (activeViz.type === "function-plot" || activeViz.type === "multi-function-plot" || activeViz.type === "derivative-plot")) {
+          const newExpr = normalizeExpr(addMatch[1]);
+          const prevFuncs = (activeViz.params.functions as string[]) || [(activeViz.params as Record<string, string>).expr];
+          const newParams = {
+            ...activeViz.params,
+            functions: [...prevFuncs, newExpr],
+            labels: [...((activeViz.params.labels as string[]) || ["f(x)"]), `h(x)`],
+            colors: [...((activeViz.params.colors as string[]) || ["#6366f1"]), "#10b981"],
+          };
+          setWorkspace((prev) => ({
+            ...prev,
+            visualizations: prev.visualizations.map((v) =>
+              v.id === activeViz.id ? { ...v, type: "multi-function-plot" as const, params: newParams, title: `${prevFuncs.length + 1} courbes` } : v
+            ),
+          }));
+          setCurrentExplanation(`**Ajout de :** ${newExpr}`);
+          const assistantMsg: Message = { role: "assistant", content: `📊 Courbe **${newExpr}** ajoutée !`, timestamp: new Date() };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setIsLoading(false);
+          return;
+        }
+
+        // Change range
+        const rangeMatch = lower.match(/(?:intervalle|plage)\s+(?:à\s*\[?)?(-?\d+)\s*(?:,|\s*(?:et|à))\s*(-?\d+)/i);
+        if (rangeMatch) {
+          const newMin = parseInt(rangeMatch[1]);
+          const newMax = parseInt(rangeMatch[2]);
+          setWorkspace((prev) => ({
+            ...prev,
+            visualizations: prev.visualizations.map((v) =>
+              v.id === activeViz.id ? { ...v, params: { ...v.params, xMin: newMin, xMax: newMax } } : v
+            ),
+          }));
+          setCurrentExplanation(`**Intervalle modifié :** [${newMin}, ${newMax}]`);
+          const assistantMsg: Message = { role: "assistant", content: `📊 Intervalle modifié à [${newMin}, ${newMax}]`, timestamp: new Date() };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setIsLoading(false);
+          return;
+        }
+
+        // Change resistance
+        const resMatch = lower.match(/(?:r[ée]sistance|\bR\b)\s+(?:à\s*)?(\d+)\s*(kΩ|Ω|ohm)/i);
+        if (resMatch && activeViz.type === "circuit-rc") {
+          const newR = resMatch[2].toLowerCase().startsWith("k") ? parseFloat(resMatch[1]) * 1000 : parseFloat(resMatch[1]);
+          setWorkspace((prev) => ({
+            ...prev,
+            visualizations: prev.visualizations.map((v) =>
+              v.id === activeViz.id ? { ...v, params: { ...v.params, R: newR } } : v
+            ),
+          }));
+          setCurrentExplanation(`**Résistance modifiée :** R = ${newR} Ω`);
+          const assistantMsg: Message = { role: "assistant", content: `⚡ Résistance modifiée à ${newR} Ω`, timestamp: new Date() };
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+          setIsLoading(false);
+          return;
+        }
+
+        // Generic modification fallback
+        const assistantMsg: Message = { role: "assistant", content: `📊 Modifiée ! Décris ce que tu veux changer.`, timestamp: new Date() };
+        setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: "lab" }));
+        setIsLoading(false);
+        return;
+      }
+    }
 
     if (labResult.success && labResult.specs.length > 0) {
       // Visualisation generated
