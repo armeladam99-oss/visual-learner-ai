@@ -510,19 +510,19 @@ export function VisualRenderer({ variant, subject }: VisualRendererProps) {
         )}
 
         {subject === "physics" && variant === "sim-projectile" && (
-          <PhysicsSimulation variant="projectile" />
+          <PhysicsSimulation viz={{ type: "projectile-sim", title: "Projectile", explanation: "", equations: [], params: { v0: 20, angle: 45, g: 9.81 } }} />
         )}
 
         {subject === "physics" && variant === "sim-pendulum" && (
-          <PhysicsSimulation variant="pendulum" />
+          <PhysicsSimulation viz={{ type: "pendulum-sim", title: "Pendule", explanation: "", equations: [], params: { length: 1, angle0: 30, g: 9.81 } }} />
         )}
 
         {subject === "physics" && variant === "sim-wave" && (
-          <PhysicsSimulation variant="wave" />
+          <PhysicsSimulation viz={{ type: "onde-sim", title: "Onde", explanation: "", equations: [], params: { amplitude: 1, frequency: 2, speed: 5 } }} />
         )}
 
         {subject === "physics" && variant === "sim-oscillation" && (
-          <PhysicsSimulation variant="oscillation" />
+          <PhysicsSimulation viz={{ type: "onde-sim", title: "Oscillation", explanation: "", equations: [], params: { amplitude: 1, frequency: 2, speed: 5 } }} />
         )}
 
         {subject === "math" && variant === "3d-parabola" && (
