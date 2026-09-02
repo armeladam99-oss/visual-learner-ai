@@ -108,10 +108,11 @@ export const generateLabSpec = action({
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return {
-        response: "⚠️ Google API Key non configurée. Ajoute GOOGLE_API_KEY dans les paramètres.",
+        response: "",
         spec: null,
         command: null,
         parameters: null,
+        error: "NO_GEMINI_KEY",
       };
     }
 

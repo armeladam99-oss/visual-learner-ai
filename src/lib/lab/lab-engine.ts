@@ -582,6 +582,8 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
     domain: "chemistry",
     patterns: [
       /montre?r?\s+(?:moi\s+)?(?:une?\s+)?mol[ée]cule\s+(?:de\s+)?(\w+)/i,
+      /ajoute\s+(?:une?\s+)?mol[ée]cule\s+(?:de\s+)?(\w+)/i,
+      /ajoute\s+(?:la\s+)?(\w+)(?:\s+(?:mol[ée]cule|molecule))?/i,
       /(\w+)\s+en\s+3[dD]/i,
       /mol[ée]cule\s+(?:de\s+)?(\w+)/i,
       /montre?r?\s+(?:moi\s+)?(?:la\s+)?structure\s+(?:de\s+)?(\w+)/i,
@@ -596,7 +598,21 @@ const DOMAIN_PATTERNS: DomainPattern[] = [
         || msg.match(/montre?r?\s+(?:moi\s+)?(?:la\s+)?(\w+)/i);
       let mol = molMatch?.[1]?.toUpperCase() || "H2O";
       // Normalize common molecule names
-      const molMap: Record<string, string> = { "ADN": "H2O", "DNA": "H2O", "EAU": "H2O", "METHANE": "CH4", "MÉTHANE": "CH4" };
+      const molMap: Record<string, string> = {
+        "ADN": "H2O", "DNA": "H2O", "EAU": "H2O",
+        "METHANE": "CH4", "MÉTHANE": "CH4", "CH4": "CH4", "CH₄": "CH4",
+        "AMMONIAK": "NH3", "AMMONIAQUE": "NH3",
+        "ACIDE CHLORHYDRIQUE": "HCl", "ACIDE SULFURIQUE": "H2SO4", "ACIDE NITRIQUE": "HNO3",
+        "HYDROXYDE DE SODIUM": "NaOH", "SEL": "NaCl",
+        "ETHANOL": "C2H5OH", "ALCOOL": "C2H5OH", "ÉTHANOL": "C2H5OH",
+        "GLUCOSE": "C6H12O6", "BENZENE": "C6H6", "BENZÈNE": "C6H6",
+        "DIOXYDE DE CARBONE": "CO2", "OXYGENE": "O2", "OXYGÈNE": "O2",
+        "AZOTE": "N2", "HYDROGENE": "H2", "HYDROGÈNE": "H2",
+        "EAU OXYGENEE": "H2O2", "EAU OXYGÉNÉE": "H2O2",
+        "ACIDE ACETIQUE": "CH3COOH", "ACIDE ACÉTIQUE": "CH3COOH",
+        "METHANOL": "CH3OH", "MÉTHANOL": "CH3OH",
+        "PERCARBONATE": "Na2CO3", "CRAIE": "CaCO3",
+      };
       if (molMap[mol]) mol = molMap[mol];
       return {
         success: true,
