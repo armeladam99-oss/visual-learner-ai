@@ -56,7 +56,9 @@ import { DataChart } from "@/components/lab/DataChart";
 import { AstronomyScene } from "@/components/lab/AstronomyScene";
 import { CircuitBuilder } from "@/components/lab/CircuitBuilder";
 import { MoleculeViewer } from "@/components/lab/MoleculeViewer";
-import { LabChooser } from "@/components/lab/LabChooser";
+import { LabWelcome } from "@/components/lab/LabWelcome";
+import { ComponentPalette } from "@/components/lab/ComponentPalette";
+import { WorkspacePanel } from "@/components/lab/WorkspacePanel";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧪 OUTILS DU LABORATOIRE — Sidebar
@@ -253,6 +255,7 @@ export default function LaboPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [currentExplanation, setCurrentExplanation] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -470,8 +473,32 @@ export default function LaboPage() {
           tools={LAB_TOOLS}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onToolClick={handleToolClick}
+          onToolClick={(domain) => { setSelectedDomain(domain === selectedDomain ? null : domain); handleToolClick(domain); }}
         />
+
+        {/* Component Palette (when domain is selected and not collapsed) */}
+        {selectedDomain && !sidebarCollapsed && (
+          <div className="w-52 flex-shrink-0 border-r border-slate-800 bg-slate-900/30 overflow-y-auto">
+            <div className="p-2 border-b border-slate-800">
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Composants</p>
+            </div>
+            <div className="p-2">
+              <ComponentPalette
+                domain={selectedDomain}
+                onAddComponent={(comp) => {
+                  const domainPrompt = selectedDomain === "electricity"
+                    ? `Ajoute ${comp.label} au circuit`
+                    : selectedDomain === "chemistry"
+                    ? `Ajoute ${comp.label}`
+                    : selectedDomain === "3d"
+                    ? `Crée ${comp.label}`
+                    : `Ajoute ${comp.label}`;
+                  handleSend(domainPrompt);
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Center: Workspace + Chat */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -480,9 +507,23 @@ export default function LaboPage() {
 
             {/* Welcome screen */}
             {showWelcome && messages.length === 0 && workspace.visualizations.length === 0 && (
-              <LabChooser
-                onSelect={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
-                onAIOpen={() => { setShowWelcome(false); }}
+              <LabWelcome
+                onSubmit={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
+                onDomainClick={(domain) => {
+                  const examples: Record<string, string> = {
+                    math: "Trace f(x) = x²",
+                    physics: "Simule un projectile à 20 m/s",
+                    chemistry: "Montre H2O en 3D",
+                    "3d": "Crée une sphère",
+                    biology: "Montre une cellule végétale",
+                    electricity: "Construis un circuit avec une résistance",
+                    geometry: "Construis un triangle ABC",
+                    astronomy: "Montre le système solaire",
+                    data: "Statistiques : 12 25 18 32 40",
+                  };
+                  setShowWelcome(false);
+                  handleSend(examples[domain] || `Montre quelque chose en ${domain}`);
+                }}
               />
             )}
 
@@ -493,32 +534,16 @@ export default function LaboPage() {
                   className="space-y-3">
                   <VizRenderer spec={activeViz} onParamChange={(key, val) => handleSliderChange(activeViz.id, key, val)} />
 
-                  {/* Sliders for this visualization */}
-                  {workspace.sliders.length > 0 && (
-                    <Card className="border-slate-700/50 bg-slate-900/50">
-                      <CardContent className="p-3 space-y-2">
-                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Paramètres</p>
-                        {workspace.sliders.map((s) => (
-                          <div key={s.id} className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 w-12">{s.symbol}</span>
-                            <Slider
-                              min={s.min} max={s.max} step={s.step}
-                              value={[s.value]}
-                              onValueChange={([v]) => handleSliderChange(activeViz.id, s.id, v)}
-                              className="flex-1 [&_[role=slider]]:bg-cyan-500"
-                            />
-                            <Input
-                              type="number"
-                              value={s.value}
-                              onChange={(e) => handleSliderChange(activeViz.id, s.id, parseFloat(e.target.value) ?? s.value)}
-                              className="w-16 h-6 text-[10px] bg-slate-800 border-slate-700 text-white text-center"
-                            />
-                            <span className="text-[10px] text-slate-500 w-8">{s.unit}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
+                  {/* Workspace Panel: Components + Parameters */}
+                  <Card className="border-slate-700/50 bg-slate-900/50">
+                    <CardContent className="p-3">
+                      <WorkspacePanel
+                        spec={activeViz}
+                        sliders={workspace.sliders}
+                        onParamChange={(key, val) => handleSliderChange(activeViz.id, key, val)}
+                      />
+                    </CardContent>
+                  </Card>
 
                   {/* Explanation */}
                   {currentExplanation && (
