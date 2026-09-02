@@ -29,6 +29,8 @@ import {
   Cpu,
   Sigma,
   Orbit,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -41,6 +43,7 @@ import {
   type AIContext,
   type Message,
 } from "@/lib/ai-engine";
+import { useTheme } from "next-themes";
 import type { LabVizSpec, LabSliderParam, LabWorkspace } from "@/lib/lab/lab-schema";
 import { labEngine, addToWorkspace, modifyVizSpec, createWorkspace } from "@/lib/lab/lab-engine";
 import { validateSpec } from "@/lib/lab/lab-validator";
@@ -62,6 +65,7 @@ import { WorkspacePanel } from "@/components/lab/WorkspacePanel";
 import { SmartAnalysis } from "@/components/lab/SmartAnalysis";
 import { DataPanel } from "@/components/lab/DataPanel";
 import { ContextActions } from "@/components/lab/ContextActions";
+import { ScientificCalculator } from "@/components/lab/ScientificCalculator";
 
 // ═══════════════════════════════════════════════════════════════
 // 🧪 OUTILS DU LABORATOIRE — Sidebar
@@ -246,6 +250,34 @@ function MessageBubble({ msg }: { msg: Message }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// 🌙 BOUTON MODE SOMBRE / CLAIR
+// ═══════════════════════════════════════════════════════════════
+
+function DarkModeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return (
+    <Button variant="ghost" size="sm" className="size-8 p-0 text-slate-400">
+      <Moon className="size-4" />
+    </Button>
+  );
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="size-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+    >
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </Button>
   );
 }
 
@@ -570,6 +602,7 @@ export default function LaboPage() {
                 {workspace.visualizations.length} viz
               </Badge>
             )}
+            <DarkModeToggle />
           </div>
         </div>
       </header>
@@ -727,6 +760,9 @@ export default function LaboPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Scientific Calculator */}
+            <ScientificCalculator />
 
             {/* Messages */}
             {messages.length > 0 && (
