@@ -82,11 +82,15 @@ Si la demande est une MODIFICATION (ajoute, supprime, change, modifie, déplace,
 {
   "response": "Description de la modification",
   "command": {
-    "type": "add" | "remove" | "update" | "animate" | "show" | "hide" | "reset",
+    "type": "add" | "remove" | "update" | "move" | "rotate" | "scale" | "animate" | "show" | "hide" | "reset",
     "target": "id de l'objet ou description",
     "data": { modifications }
   }
 }
+
+Pour les MODIFICATIONS, utilise le contexte du laboratoire (LabContext) : les objets, visualisations et paramètres déjà créés figurent dans l'historique de la conversation. Si l'élève écrit « ajoute une lune » ou « change sa masse », identifie l'objet déjà présent (planète, sphère, courbe...) et précise-le dans "target" et dans "response". Si l'objet existe déjà, n'en crée pas un doublon : utilise une commande update / move / rotate / scale / show / hide.
+
+Quand "response" décrit un graphique ou une courbe, explique brièvement comment le lire : axe horizontal, axe vertical, unités, points importants, forme de la courbe et conclusion à en tirer.
 
 Si la demande est une CONVERSATION générale (pas scientifique), retourne UNIQUEMENT :
 {

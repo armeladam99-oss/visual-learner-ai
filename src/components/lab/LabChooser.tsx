@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   Sigma, Cpu, Globe, Zap, FlaskConical, Dna, Orbit, BarChart3,
   Atom, Search, ArrowLeft, ChevronRight, Sparkles, Beaker, TestTubeDiagonal,
-  Magnet, Waves, Lightbulb, Binary, PenTool, Rocket, Telescope,
+  Magnet, Waves, Lightbulb, Binary, PenTool, Rocket, Telescope, X, Wand2,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════
@@ -158,6 +158,19 @@ const LAB_DOMAINS: LabDomainItem[] = [
   },
 ];
 
+// Exemples de prompt libre par domaine (aides, jamais des limites)
+const CUSTOM_SUGGESTIONS: Record<string, string> = {
+  math: "Trace f(x)=x³-2x+1 avec sa dérivée et ses racines",
+  geometry: "Construis un triangle rectangle ABC et affiche ses angles",
+  "3d": "Crée une scène avec une sphère rouge et un cube bleu qui tourne",
+  physics: "Étudie la chute d'une bille de 500 g depuis 10 m",
+  chemistry: "Montre HCl en 3D et explique sa liaison",
+  biology: "Montre une cellule animale avec ses organites",
+  electricity: "Construis un circuit en parallèle avec deux résistances",
+  astronomy: "Crée une planète avec deux lunes",
+  data: "Calcule la moyenne et trace le graphique de 12 25 18 32 40",
+};
+
 // ═══════════════════════════════════════════════════════════════
 // 🧪 LAB CHOOSER COMPONENT
 // ═══════════════════════════════════════════════════════════════
@@ -165,12 +178,20 @@ const LAB_DOMAINS: LabDomainItem[] = [
 export function LabChooser({
   onSelect,
   onAIOpen,
+  initialDomain,
+  onBackToHome,
 }: {
   onSelect: (prompt: string) => void;
   onAIOpen: () => void;
+  initialDomain?: string | null;
+  onBackToHome?: () => void;
 }) {
-  const [selectedDomain, setSelectedDomain] = useState<LabDomainItem | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<LabDomainItem | null>(() => {
+    if (!initialDomain) return null;
+    return LAB_DOMAINS.find((d) => d.id === initialDomain) ?? null;
+  });
   const [searchQuery, setSearchQuery] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
 
   const filteredDomains = LAB_DOMAINS.filter((d) =>
     !searchQuery || d.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -239,6 +260,16 @@ export function LabChooser({
                 <p className="text-[10px] text-slate-400">Décris librement ce que tu veux — l&apos;IA comprend et crée la visualisation</p>
               </div>
             </button>
+
+            {onBackToHome && (
+              <button
+                onClick={onBackToHome}
+                className="sm:col-span-2 lg:col-span-3 flex items-center justify-center gap-1.5 rounded-xl border border-slate-700/40 bg-slate-800/30 px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              >
+                <X className="size-3.5" />
+                Fermer et écrire librement
+              </button>
+            )}
           </motion.div>
         ) : (
           <motion.div key="experiments"
@@ -283,9 +314,41 @@ export function LabChooser({
               ))}
             </div>
 
-            {/* Custom input for this domain */}
-            <div className="rounded-xl border border-dashed border-slate-600 bg-slate-800/30 p-3 text-center">
-              <p className="text-xs text-slate-500">Ou décris ce que tu veux en {selectedDomain.label.toLowerCase()}...</p>
+            {/* Custom experiment for this domain — vrai champ libre */}
+            <div className="rounded-xl border border-dashed border-cyan-500/25 bg-cyan-500/5 p-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Wand2 className="size-3.5 text-cyan-400" />
+                <p className="text-xs font-medium text-cyan-300">
+                  ✨ Créer mon expérience en {selectedDomain.label.toLowerCase()}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (customPrompt.trim()) onSelect(customPrompt.trim());
+                      setCustomPrompt("");
+                    }
+                  }}
+                  placeholder={CUSTOM_SUGGESTIONS[selectedDomain.id] || "Décris ton expérience..."}
+                  className="flex-1 bg-slate-800/90 border-slate-700 text-white text-sm placeholder:text-slate-500"
+                />
+                <Button
+                  size="sm"
+                  disabled={!customPrompt.trim()}
+                  onClick={() => {
+                    onSelect(customPrompt.trim());
+                    setCustomPrompt("");
+                  }}
+                  className="flex-shrink-0 bg-cyan-600 hover:bg-cyan-500"
+                >
+                  <Sparkles className="size-3.5 mr-1.5" />
+                  Créer
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
