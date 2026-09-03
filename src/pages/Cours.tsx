@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { chaptersV2 } from "@/data/chapters-v2";
-import { BookOpen, Clock, ChevronRight } from "lucide-react";
+import { BookOpen, Clock, ChevronRight, Wand2 } from "lucide-react";
 
 const subjectFilters = [
   { id: "all", label: "Toutes", icon: "📚" },
@@ -45,6 +46,28 @@ export default function CoursPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 pt-6 pb-24 space-y-6">
+        {/* IA : générateur de cours */}
+        <button
+          onClick={() => navigate("/cours-ia")}
+          className="group w-full rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-transparent to-accent/10 p-4 sm:p-5 text-left transition-all hover:border-primary/40 hover:shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Wand2 className="size-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground flex items-center gap-2">
+                🎓 Générer un cours avec l’IA
+                <Badge variant="secondary" className="text-[9px]">2BAC SM B</Badge>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Écris un chapitre : résumé complet avec formules LaTeX, concepts clés et « ⚡ Espace Défi / Exercices Difficiles » niveau Examen National.
+              </p>
+            </div>
+            <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+          </div>
+        </button>
+
         {/* Subject filter */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {subjectFilters.map((f) => (

@@ -17,6 +17,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const CoursPage = lazy(() => import("./pages/Cours.tsx"));
 const LaboPage = lazy(() => import("./pages/Labo.tsx"));
 const Lesson = lazy(() => import("./pages/Lesson.tsx"));
+const CoursIA = lazy(() => import("./pages/CoursIA.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 import { BottomNav } from "@/components/BottomNav";
 
@@ -151,6 +152,14 @@ createRoot(document.getElementById("root")!).render(
                 element={
                   <RequireAuth>
                     <Lesson />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/cours-ia"
+                element={
+                  <RequireAuth>
+                    <CoursIA />
                   </RequireAuth>
                 }
               />
