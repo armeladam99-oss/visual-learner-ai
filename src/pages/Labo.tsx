@@ -51,6 +51,8 @@ import { parseModification, applyCommand, type LabModCommand } from "@/lib/lab/l
 import { getMolecule } from "@/lib/lab/molecule-library";
 import { normalizeExpr } from "@/lib/viz-types";
 import { FunctionPlot2D } from "@/components/visual/FunctionPlot2D";
+import { AICourseCard } from "@/components/visual/AICourseCard";
+import { isAICourse } from "@/lib/ai-course";
 import { Scene3DViewer } from "@/components/visual/Scene3DViewer";
 import { PhysicsSimulation } from "@/components/visual/PhysicsSimulation";
 import { ScientificDiagram } from "@/components/visual/ScientificDiagram";
@@ -232,24 +234,39 @@ function ModeIndicator({ mode }: { mode: AIMode }) {
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
+  const course = !isUser ? msg.course : null;
+
+  const bubble = (
+    <div className={`rounded-2xl px-4 py-3 ${
+      isUser ? "bg-cyan-600 text-white rounded-br-md" : "bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-md"
+    }`}>
+      {!isUser && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <Brain className="size-3 text-cyan-400" />
+          <span className="text-[10px] font-semibold text-cyan-400">Studio ADAM IA</span>
+        </div>
+      )}
+      <div className="text-sm leading-relaxed whitespace-pre-line">
+        {msg.content.split("**").map((part, j) =>
+          j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : <span key={j}>{part}</span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-        isUser ? "bg-cyan-600 text-white rounded-br-md" : "bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-md"
-      }`}>
-        {!isUser && (
-          <div className="flex items-center gap-1.5 mb-2">
-            <Brain className="size-3 text-cyan-400" />
-            <span className="text-[10px] font-semibold text-cyan-400">Studio ADAM IA</span>
+      {course ? (
+        <div className="w-full max-w-[620px] min-w-0 flex flex-col items-start gap-3">
+          <div className="max-w-full">{bubble}</div>
+          <div className="w-full">
+            <AICourseCard course={course} />
           </div>
-        )}
-        <div className="text-sm leading-relaxed whitespace-pre-line">
-          {msg.content.split("**").map((part, j) =>
-            j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : <span key={j}>{part}</span>
-          )}
         </div>
-      </div>
+      ) : (
+        <div className="max-w-[85%]">{bubble}</div>
+      )}
     </motion.div>
   );
 }
@@ -328,7 +345,7 @@ export default function LaboPage() {
 
   const chatAction = useAction(api.aiChat.chat);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const groqChatAction = useAction((api as any).aiGroq?.groqChat) as ((args: { messages: { role: string; content: string }[] }) => Promise<{ response: string; spec: unknown; graphData: unknown; analysis: unknown; error?: string; connected: boolean }>) | null;
+  const groqChatAction = useAction((api as any).aiGroq?.groqChat) as ((args: { messages: { role: string; content: string }[] }) => Promise<{ response: string; course: unknown; spec: unknown; graphData: unknown; analysis: unknown; error?: string; connected: boolean }>) | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const labSpecAction = useAction((api as any).aiLabSpec?.generateLabSpec) as ((args: { messages: { role: string; parts: { text: string }[] }[]; userMessage: string }) => Promise<{ response: string; spec: unknown; command: unknown; parameters: unknown; error?: string }>) | null;
 
@@ -409,6 +426,7 @@ export default function LaboPage() {
         if (!groqResult.error) {
           let vizCreated = false;
           const responseText = groqResult.response || "Je n'ai pas pu générer de réponse.";
+          const coursePayload = isAICourse(groqResult.course) ? groqResult.course : null;
 
           // If Groq returned a spec (visualization)
           if (groqResult.spec && typeof groqResult.spec === "object") {
@@ -431,9 +449,10 @@ export default function LaboPage() {
           const assistantMsg: Message = {
             role: "assistant",
             content: responseText,
+            course: coursePayload,
             timestamp: new Date(),
           };
-          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: vizCreated ? "lab" : "general" }));
+          setCtx((prev) => ({ ...prev, conversationHistory: [...prev.conversationHistory, assistantMsg], currentMode: vizCreated ? "lab" : coursePayload ? "education" : "general" }));
           setIsLoading(false);
           return;
         }
