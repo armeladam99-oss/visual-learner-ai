@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, ChevronRight, Clock, BookOpen } from "lucide-react";
+import { ArrowLeft, ChevronRight, Clock, BookOpen, ListTree } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { chapters, subjectLabels, subjectColors } from "@/data/chapters";
 import { getLessonSections } from "@/data/lessons";
 import { LessonSectionWrapper } from "@/components/visual/LessonSectionWrapper";
@@ -35,6 +42,15 @@ export default function Lesson() {
     [chapterId]
   );
   const nextChapter = currentIndex >= 0 ? chapters[currentIndex + 1] : undefined;
+
+  const activeIndex = useMemo(() => {
+    const idx = sections.findIndex((s) => s.id === activeSection);
+    return idx >= 0 ? idx : 0;
+  }, [sections, activeSection]);
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // Track active section on scroll
   useEffect(() => {
@@ -110,8 +126,21 @@ export default function Lesson() {
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs hidden sm:flex">
-            {sections.length}/18 sections
+          {/* Dynamic lesson progress */}
+          <div className="hidden sm:flex flex-col items-end gap-1">
+            <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
+              Section {activeIndex + 1}/{sections.length}
+            </span>
+            <div className="w-28 h-1.5 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                animate={{ width: `${((activeIndex + 1) / sections.length) * 100}%` }}
+                transition={{ type: "spring", stiffness: 120, damping: 25 }}
+              />
+            </div>
+          </div>
+          <Badge variant="outline" className="text-xs sm:hidden">
+            {activeIndex + 1}/{sections.length}
           </Badge>
         </div>
       </header>
@@ -153,28 +182,44 @@ export default function Lesson() {
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8 space-y-2">
-            {/* Mobile section nav */}
-            <div className="lg:hidden mb-6 overflow-x-auto">
-              <div className="flex gap-1 pb-2">
-                {sections.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    className={`flex-shrink-0 rounded-full px-3 py-1 text-[10px] font-medium transition-all ${
-                      activeSection === section.id
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document
-                        .getElementById(section.id)
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                  >
-                    {section.icon}
-                  </a>
-                ))}
+            {/* Mobile section nav — compact dropdown + progress */}
+            <div className="lg:hidden mb-6 space-y-2">
+              <Select
+                value={activeSection || sections[0]?.id || ""}
+                onValueChange={scrollToSection}
+              >
+                <SelectTrigger className="w-full h-10 bg-background border-border/50 text-xs font-medium">
+                  <ListTree className="size-3.5 text-primary" />
+                  <SelectValue placeholder="Aller à une section..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {sections.map((section, i) => (
+                    <SelectItem
+                      key={section.id}
+                      value={section.id}
+                      className="text-xs"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{section.icon}</span>
+                        <span className="truncate">
+                          {i + 1}. {section.title}
+                        </span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                    animate={{ width: `${((activeIndex + 1) / sections.length) * 100}%` }}
+                    transition={{ type: "spring", stiffness: 120, damping: 25 }}
+                  />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground tabular-nums flex-shrink-0">
+                  {activeIndex + 1}/{sections.length}
+                </span>
               </div>
             </div>
 
@@ -224,6 +269,7 @@ export default function Lesson() {
                 icon={section.icon}
                 title={section.title}
                 index={i}
+                totalSections={sections.length}
               >
                 {section.content}
               </LessonSectionWrapper>
@@ -265,8 +311,8 @@ export default function Lesson() {
               </div>
             )}
 
-            {/* Footer spacing */}
-            <div className="h-24" />
+            {/* Footer spacing (keeps content clear of the fixed bottom nav) */}
+            <div className="h-28" />
           </div>
         </div>
       </div>

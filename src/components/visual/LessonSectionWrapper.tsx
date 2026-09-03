@@ -7,6 +7,7 @@ interface LessonSectionWrapperProps {
   title: string;
   children: React.ReactNode;
   index: number;
+  totalSections?: number;
 }
 
 export function LessonSectionWrapper({
@@ -15,6 +16,7 @@ export function LessonSectionWrapper({
   title,
   children,
   index,
+  totalSections = 18,
 }: LessonSectionWrapperProps) {
   return (
     <motion.section
@@ -33,7 +35,7 @@ export function LessonSectionWrapper({
             {title}
           </h2>
           <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
-            {index + 1}/{18}
+            {index + 1}/{totalSections}
           </span>
         </div>
         <div className="space-y-5">{children}</div>

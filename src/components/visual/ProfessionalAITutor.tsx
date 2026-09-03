@@ -403,6 +403,26 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
     scrollToBottom();
   }, [messages]);
 
+  // Classify short, social or unclear inputs so they get natural replies
+  // instead of the generic "unknown topic" template.
+  const classifyInput = (query: string) => {
+    const q = query.toLowerCase().trim();
+
+    const greetings = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|salam|bjr|yo)[\s!.,?]*$/;
+    const thanks = /^(merci|thank|thanks|choukran|shukran|mrc)[\s!.,?]*$/;
+    const affirm = /^(oui|ouais|yes|ok|okay|d'accord|bien|super|genial|génial)[\s!.,?]*$/;
+    const deny = /^(non|nope|nan|no)[\s!.,?]*$/;
+    const shortFollowUp = /^(pourquoi|comment|et ensuite|et après|ensuite|apres|alors|c'est quoi|explique encore|encore|etape suivante|la suite|continue|reformule|reformuler)[\s!.,?]*$/;
+
+    if (greetings.test(q)) return "greeting";
+    if (thanks.test(q)) return "thanks";
+    if (affirm.test(q)) return "affirm";
+    if (deny.test(q)) return "deny";
+    if (shortFollowUp.test(q)) return "shortFollowUp";
+    if (q.length < 4 || q.length > 300) return "tooShort";
+    return "unknown";
+  };
+
   const findBestResponse = (query: string): KnowledgeEntry | null => {
     const normalizedQuery = query.toLowerCase();
     const entries = knowledgeBase[subjectKey];
@@ -476,6 +496,7 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
 
     // Fallback: local knowledge base (fast, no API needed)
     const match = findBestResponse(query);
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
 
     let response: string;
     let followUp: string[] | undefined;
@@ -484,16 +505,98 @@ export function ProfessionalAITutor({ subject, subjectKey }: ProfessionalAITutor
       response = match.response;
       followUp = match.followUp;
     } else {
-      response = `Excellente question ! En tant que **${expert.name}**, voici mon analyse :
+      const intent = classifyInput(query);
+      const topics = knowledgeBase[subjectKey].map((e) => e.keywords[0]);
 
-La question "${query}" touche un point important du programme. Je te conseille de :
+      switch (intent) {
+        case "greeting":
+          response = `Bonjour ! 👋 Je suis **${expert.name}**, ${expert.title}.
 
-1. **Revoir les formules** de base de cette section
-2. **Examiner les graphiques interactifs** ci-dessus
-3. **Tester ta compréhension** avec le mini-test
+Je suis là pour t'aider sur **${subject}**. Tu peux me demander :
 
-Pour des questions très spécifiques, n'hésite pas à reformuler ta demande avec des mots-clés du cours (comme "formule", "graphique", "démonstration", etc.).`;
-      followUp = ["Reformule ma question", "Résume les formules clés"];
+• d'expliquer une notion du cours
+• de résoudre un exercice étape par étape
+• de t'aider à lire un graphique
+• de te donner des astuces pour le Bac
+
+Qu'est-ce qu'on révise aujourd'hui ?`;
+          followUp = [
+            "Explique-moi les formules essentielles",
+            "Aide-moi à résoudre un exercice",
+            "Montre-moi un graphique interactif",
+          ];
+          break;
+
+        case "thanks":
+          response = `Avec plaisir ! 😊 N'hésite pas si tu veux approfondir un point ou passer à un autre exercice.
+
+Tu peux aussi **revoir les graphiques interactifs** et t'entraîner avec le **mini-test** de cette page pour vérifier que tout est clair.`;
+          followUp = ["Donne-moi un autre exemple", "Lance-moi le mini-test"];
+          break;
+
+        case "affirm":
+          response =
+            lastAssistant
+              ? `Parfait ! 👍 Si tu veux, on peut aller plus loin sur ce qu'on vient de voir.
+
+Tu peux me demander un **exemple chiffré**, la **démonstration** de la formule, ou un **graphique** pour visualiser la notion.`
+              : `Parfait ! 👍 Qu'est-ce que tu veux qu'on regarde en premier dans ${subject} ?`;
+          followUp = ["Continue l'explication", "Donne-moi un exemple chiffré", "Montre-moi le graphique"];
+          break;
+
+        case "deny":
+          response =
+            lastAssistant
+              ? `Pas de souci ! 😉 Dis-moi ce que tu veux voir d'autre : une autre notion du cours, un exercice, ou un graphique ?`
+              : `Pas de souci ! 😉 Dis-moi sur quoi tu veux qu'on travaille dans ${subject}.`;
+          followUp = ["Propose-moi un exercice", "Explique la notion la plus importante"];
+          break;
+
+        case "shortFollowUp":
+          response = lastAssistant
+            ? `Bonne question ! 🤔 Pour bien te répondre, peux-tu préciser un peu ce que tu veux savoir ? Par exemple :
+
+• "reprends l'explication de la formule"
+• "détaille le calcul étape par étape"
+• "donne un autre exemple"
+
+On vient de parler de : "${lastAssistant.content.slice(0, 90)}${lastAssistant.content.length > 90 ? "…" : ""}".`
+            : `Bonne question ! 🤔 Pose-moi une question complète, par exemple :
+
+• "Explique-moi la notion de ${topics[0]}"
+• "Comment résoudre un exercice sur ${topics[1] ?? subject} ?"`;
+          followUp = [
+            "Continue l'explication précédente",
+            `Explique la notion de ${topics[0]}`,
+          ];
+          break;
+
+        case "tooShort":
+          response = `Je n'ai pas bien compris ta demande 😅 — elle est un peu courte. Peux-tu la reformuler en une phrase complète ?
+
+Par exemple : "explique-moi la notion de ${topics[0]}" ou "aide-moi à résoudre un exercice sur ${subject}."`;
+          followUp = [
+            `Explique-moi ${topics[0]}`,
+            "Aide-moi à résoudre un exercice",
+          ];
+          break;
+
+        case "unknown":
+        default:
+          response = `Hmm, je n'ai pas trouvé de réponse locale pour "${query.slice(0, 80)}${query.length > 80 ? "…" : ""}" 🤔.
+
+Si l'IA est hors ligne, je peux surtout t'aider sur les **notions clés de cette leçon** : ${topics
+            .slice(0, 5)
+            .join(", ")}.
+
+Essaie de formuler ta question avec un mot-clé du cours (par exemple "formule", "exercice", "graphique", "${topics[0]}"), ou demande-moi de résumer le chapitre.`;
+          followUp = [
+            "Résume les formules clés",
+            `Explique-moi ${topics[0]}`,
+            "Donne-moi un exercice type Bac",
+          ];
+          break;
+      }
     }
 
     const assistantMessage: Message = {

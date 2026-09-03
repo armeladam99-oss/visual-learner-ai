@@ -56,10 +56,38 @@ export function AITutorPanel({ subject }: AITutorPanelProps) {
       }
     }
 
-    // Local fallback
-    setResponse(
-      `En tant que professeur IA, je peux t'expliquer "${userMessage}" en détail. Pour des réponses plus précises, configure GROQ_API_KEY dans les paramètres. Pour le moment, explore les cours et visualisations interactives ci-dessus ! 🎓`
-    );
+    // Local fallback — graceful guidance instead of a broken/empty promise
+    const trimmed = userMessage.toLowerCase().trim();
+    const isGreeting = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|salam|bjr)[\s!.,?]*$/.test(trimmed);
+    const isThanks = /^(merci|merci beaucoup|thanks|thank you|mrc|choukran)[\s!.,?]*$/.test(trimmed);
+
+    if (isGreeting) {
+      setResponse(
+        `Bonjour ! 👋 Bienvenue dans l'assistant ${subject}.
+
+L'IA conversationnelle n'est pas encore connectée sur cette session, mais je peux déjà t'aider à :
+
+• revoir les **formules clés** de la leçon
+• comprendre les **graphiques interactifs** ci-dessus
+• t'entraîner avec les **exercices** et le **mini-test**
+
+Quelle notion veux-tu approfondir ?`
+      );
+    } else if (isThanks) {
+      setResponse("Avec plaisir ! 😊 Continue comme ça, et n'hésite pas si un point reste flou.");
+    } else if (trimmed.length < 4) {
+      setResponse(
+        `Je n'ai pas bien compris ta demande 😅 Peux-tu la reformuler en une phrase complète ? Par exemple : "explique-moi la formule principale de ${subject}" ou "aide-moi à résoudre le premier exercice".`
+      );
+    } else {
+      setResponse(
+        `Bonne question sur « ${userMessage} » ! 🤔
+
+Pour te répondre précisément, regarde d'abord les **sections de cours** et les **graphiques interactifs** au-dessus : ils expliquent les notions essentielles de ${subject}.
+
+Tu peux aussi me poser une question plus ciblée, par exemple avec les mots-clés du cours (formule, exercice, graphique, exemple…), ou utiliser les **suggestions** ci-dessus.`
+      );
+    }
     setLoading(false);
   }, [message, history, subject, groqChatAction]);
 

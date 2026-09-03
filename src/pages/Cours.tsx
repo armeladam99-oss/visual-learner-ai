@@ -44,7 +44,7 @@ export default function CoursPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 py-6 space-y-6">
+      <div className="mx-auto max-w-5xl px-4 pt-6 pb-24 space-y-6">
         {/* Subject filter */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {subjectFilters.map((f) => (

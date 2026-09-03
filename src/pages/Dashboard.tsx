@@ -64,7 +64,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-8 pb-24 space-y-8">
         {/* Welcome section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

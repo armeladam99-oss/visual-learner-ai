@@ -115,8 +115,8 @@ export function InteractiveGraph({
           )}
         </CardHeader>
         <CardContent className="space-y-5">
-          {/* Chart */}
-          <div className="w-full h-[320px] rounded-lg bg-muted/30 p-2">
+          {/* Chart — responsive height: shorter on mobile so axis labels stay readable */}
+          <div className="w-full min-w-0 h-[280px] sm:h-[340px] rounded-lg bg-muted/30 p-1.5 sm:p-2">
             <ResponsiveContainer width="100%" height="100%">
               <Chart data={data} margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
                 <CartesianGrid
@@ -200,15 +200,15 @@ export function InteractiveGraph({
             </ResponsiveContainer>
           </div>
 
-          {/* Sliders + Inputs */}
+          {/* Sliders + Inputs — full-width on mobile, 2-3 columns on larger screens */}
           {paramDefs.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5 px-0.5">
               {paramDefs.map((param) => (
-                <div key={param.symbol} className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
+                <div key={param.symbol} className="space-y-2 min-w-0">
+                  <label className="text-sm font-medium text-foreground block truncate">
                     {param.name}
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Input
                       type="number"
                       value={paramValues[param.symbol]}
@@ -219,7 +219,7 @@ export function InteractiveGraph({
                           setParamValues((prev) => ({ ...prev, [param.symbol]: clamped }));
                         }
                       }}
-                      className="h-8 text-sm font-mono font-semibold text-center w-20 border-primary/30 focus:border-primary"
+                      className="h-8 text-sm font-mono font-semibold text-center w-[4.5rem] border-primary/30 focus:border-primary"
                       step={param.step}
                     />
                     <span className="text-[10px] text-muted-foreground">

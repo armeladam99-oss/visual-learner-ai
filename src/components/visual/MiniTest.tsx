@@ -26,6 +26,7 @@ export function MiniTest({ questions }: MiniTestProps) {
     setAnswers((prev) => ({ ...prev, [qIndex]: oIndex }));
   };
 
+  const answeredCount = Object.keys(answers).length;
   const allAnswered = questions.every((_, i) => answers[i] !== undefined);
   const score = showResults
     ? questions.filter((q, i) => answers[i] === q.correctIndex).length
@@ -68,7 +69,8 @@ export function MiniTest({ questions }: MiniTestProps) {
                       key={oIndex}
                       onClick={() => handleAnswer(qIndex, oIndex)}
                       disabled={showResults}
-                      className={`text-left text-sm rounded-lg border px-4 py-2.5 transition-all ${
+                      aria-pressed={isSelected}
+                      className={`w-full text-left text-sm rounded-xl border px-3.5 py-2.5 break-words transition-all sm:px-4 ${
                         showCorrect
                           ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
                           : showWrong
@@ -102,13 +104,20 @@ export function MiniTest({ questions }: MiniTestProps) {
           ))}
 
           <div className="flex items-center justify-between pt-2 border-t border-border/30">
-            {showResults && (
-              <Badge
-                variant={score === questions.length ? "default" : "secondary"}
-              >
-                Score: {score}/{questions.length}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {showResults && (
+                <Badge
+                  variant={score === questions.length ? "default" : "secondary"}
+                >
+                  Score : {score}/{questions.length}
+                </Badge>
+              )}
+              {!showResults && answeredCount > 0 && (
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {answeredCount}/{questions.length} répondues
+                </span>
+              )}
+            </div>
             <Button
               onClick={() => {
                 if (!showResults && allAnswered) {

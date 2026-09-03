@@ -574,7 +574,7 @@ export default function LaboPage() {
   const activeViz = workspace.visualizations.find((v) => v.id === workspace.activeVizId) || workspace.visualizations[workspace.visualizations.length - 1];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col pb-20">
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-50 border-b border-cyan-500/20 bg-slate-900/80 backdrop-blur-xl">
         <div className="flex h-14 items-center justify-between px-4">
