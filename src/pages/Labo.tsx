@@ -60,6 +60,7 @@ import { AstronomyScene } from "@/components/lab/AstronomyScene";
 import { CircuitBuilder } from "@/components/lab/CircuitBuilder";
 import { MoleculeViewer } from "@/components/lab/MoleculeViewer";
 import { LabWelcome } from "@/components/lab/LabWelcome";
+import { LabChooser } from "@/components/lab/LabChooser";
 import { ComponentPalette } from "@/components/lab/ComponentPalette";
 import { WorkspacePanel } from "@/components/lab/WorkspacePanel";
 import { SmartAnalysis } from "@/components/lab/SmartAnalysis";
@@ -291,6 +292,7 @@ export default function LaboPage() {
   const [workspace, setWorkspace] = useState<LabWorkspace>(createWorkspace());
   const [isLoading, setIsLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [chooserDomain, setChooserDomain] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [currentExplanation, setCurrentExplanation] = useState("");
@@ -646,16 +648,30 @@ export default function LaboPage() {
           {/* Workspace area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-            {/* Welcome screen */}
+            {/* Welcome screen — Libre (texte) OU guidée (chooser par domaine) */}
             {showWelcome && messages.length === 0 && workspace.visualizations.length === 0 && (
-              <LabWelcome
-                onSubmit={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
-                onDomainClick={(domain) => {
-                  // Just select the domain for the component palette — do NOT auto-send
-                  setSelectedDomain(domain);
-                  setSidebarCollapsed(false);
-                }}
-              />
+              chooserDomain ? (
+                <LabChooser
+                  key={chooserDomain}
+                  initialDomain={chooserDomain}
+                  onSelect={(prompt) => {
+                    setChooserDomain(null);
+                    handleSend(prompt);
+                  }}
+                  onAIOpen={() => setChooserDomain(null)}
+                  onBackToHome={() => setChooserDomain(null)}
+                />
+              ) : (
+                <LabWelcome
+                  onSubmit={(prompt) => { setShowWelcome(false); handleSend(prompt); }}
+                  onDomainClick={(domain) => {
+                    // Ouvre le catalogue d'expériences du domaine (palette conservée en aide latérale)
+                    setSelectedDomain(domain);
+                    setSidebarCollapsed(false);
+                    setChooserDomain(domain);
+                  }}
+                />
+              )
             )}
 
             {/* Active visualization */}

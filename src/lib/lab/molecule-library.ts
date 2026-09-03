@@ -460,7 +460,7 @@ export const MOLECULE_DATABASE: Record<string, MoleculeData> = {
     category: "Ion",
     atoms: [el("O", [-0.47, 0, 0]), el("H", [0.47, 0, 0])],
     bonds: [bond(0, 1)],
-    description: "Ion基本ique. Présent dans les solutions basiques.",
+    description: "Ion basique. Présent dans les solutions basiques.",
   },
 
   // ─── Salt ───
