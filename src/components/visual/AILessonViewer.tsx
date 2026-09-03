@@ -1,16 +1,16 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+import type { ReactNode } from "react";
 import { Trophy, GraduationCap, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
-import "katex/dist/katex.min.css";
+import { latexToUnicode } from "@/lib/math-pretty";
 
 // ═══════════════════════════════════════════════════════════════
 // 🎓 AILESSON VIEWER — rend un cours généré par l’IA
 // (équivalent Vite/React du LessonViewer Next.js fourni)
-// Markdown complet + vraies formules LaTeX via KaTeX.
+// Rendu allégé sans dépendances lourdes : le Markdown simple
+// (titres, listes, gras) est parsé à la main et les formules
+// LaTeX ($...$) sont converties en notation Unicode, comme dans
+// le reste de Studio ADAM (AICourseCard, leçons intégrées…).
 // ═══════════════════════════════════════════════════════════════
 
 export interface AILessonExercise {
@@ -30,78 +30,134 @@ export interface AILessonData {
   hard_exercises: AILessonExercise[];
 }
 
-const mdComponents = {
-  h1: (props: { children?: React.ReactNode }) => (
-    <h1 className="mt-6 mb-3 text-2xl font-bold text-white first:mt-0">{props.children}</h1>
-  ),
-  h2: (props: { children?: React.ReactNode }) => (
-    <h2 className="mt-6 mb-2.5 text-xl font-bold text-slate-100 first:mt-0">{props.children}</h2>
-  ),
-  h3: (props: { children?: React.ReactNode }) => (
-    <h3 className="mt-5 mb-2 text-lg font-semibold text-indigo-300 first:mt-0">{props.children}</h3>
-  ),
-  h4: (props: { children?: React.ReactNode }) => (
-    <h4 className="mt-4 mb-1.5 text-base font-semibold text-slate-100 first:mt-0">{props.children}</h4>
-  ),
-  p: (props: { children?: React.ReactNode }) => (
-    <p className="my-2 leading-relaxed text-slate-300 first:mt-0 last:mb-0">{props.children}</p>
-  ),
-  ul: (props: { children?: React.ReactNode }) => (
-    <ul className="my-2.5 list-disc pl-6 space-y-1.5 text-slate-300 marker:text-slate-500">{props.children}</ul>
-  ),
-  ol: (props: { children?: React.ReactNode }) => (
-    <ol className="my-2.5 list-decimal pl-6 space-y-1.5 text-slate-300 marker:text-slate-500">{props.children}</ol>
-  ),
-  li: (props: { children?: React.ReactNode }) => <li className="leading-relaxed">{props.children}</li>,
-  strong: (props: { children?: React.ReactNode }) => <strong className="font-semibold text-white">{props.children}</strong>,
-  em: (props: { children?: React.ReactNode }) => <em className="text-slate-100 italic">{props.children}</em>,
-  code: (props: { children?: React.ReactNode }) => (
-    <code className="rounded-md bg-slate-700/60 border border-slate-600/40 px-1.5 py-0.5 font-mono text-[0.85em] text-cyan-300">
-      {props.children}
-    </code>
-  ),
-  a: (props: { href?: string; children?: React.ReactNode }) => (
-    <a href={props.href} target="_blank" rel="noreferrer" className="text-indigo-400 underline decoration-indigo-500/40 hover:text-indigo-300">
-      {props.children}
-    </a>
-  ),
-  hr: () => <hr className="my-4 border-slate-700" />,
-};
-
-/** Si une formule LaTeX est mal formée, rehype-katex lève une erreur :
- *  on affiche alors le texte brut plutôt que de faire planter la page. */
-class KatexBoundary extends Component<{ children: ReactNode; fallbackText?: string }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    if (this.state.failed) {
-      return (
-        <pre className="whitespace-pre-wrap font-mono text-sm text-slate-300 bg-slate-900/40 rounded-lg p-3 overflow-x-auto">
-          {this.props.fallbackText || "(formule non rendue)"}
-        </pre>
-      );
-    }
-    return this.props.children;
-  }
+// ────────────────────────────────────────────────────────────────
+// Texte enrichi : gras **…**, code `…` et formules $…$ → Unicode.
+// ────────────────────────────────────────────────────────────────
+function InlineText({ text }: { text: string }) {
+  const pretty = latexToUnicode(text);
+  const parts = pretty.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+          return (
+            <strong key={i} className="font-semibold text-white">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+          return (
+            <code
+              key={i}
+              className="rounded-md bg-slate-700/60 border border-slate-600/40 px-1.5 py-0.5 font-mono text-[0.85em] text-cyan-300"
+            >
+              {part.slice(1, -1)}
+            </code>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
 }
 
+function paraClass() {
+  return "my-2 leading-relaxed text-slate-300 first:mt-0 last:mb-0";
+}
+
+/** Parse Markdown minimal : titres, listes, paragraphes, séparateur. */
 function MarkdownBlock({ text }: { text?: string }) {
   if (!text) return null;
-  return (
-    <div className="ai-katex">
-      <KatexBoundary fallbackText={text}>
-        <ReactMarkdown
-          remarkPlugins={[remarkMath]}
-          rehypePlugins={[rehypeKatex]}
-          components={mdComponents}
-        >
-          {text}
-        </ReactMarkdown>
-      </KatexBoundary>
-    </div>
-  );
+  const lines = text.split(/\r?\n/).map((l) => l.trim());
+  const out: ReactNode[] = [];
+  let key = 0;
+  let i = 0;
+
+  const pushList = (ordered: boolean, startIdx: number): number => {
+    const items: string[] = [];
+    let j = startIdx;
+    const re = ordered ? /^\d+[.)]\s+(.*)$/ : /^[-*]\s+(.*)$/;
+    while (j < lines.length) {
+      const m = lines[j].match(re);
+      if (!m) break;
+      items.push(m[1]);
+      j += 1;
+    }
+    const cls = ordered
+      ? "my-2.5 list-decimal pl-6 space-y-1.5 text-slate-300 marker:text-slate-500"
+      : "my-2.5 list-disc pl-6 space-y-1.5 text-slate-300 marker:text-slate-500";
+    out.push(
+      <ul key={key++} className={cls}>
+        {items.map((it, idx) => (
+          <li key={idx} className="leading-relaxed">
+            <InlineText text={it} />
+          </li>
+        ))}
+      </ul>,
+    );
+    return j;
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line) {
+      i += 1;
+      continue;
+    }
+    // Titres (# et ## sont ramenés à un niveau h3 pour ne pas écraser le titre du cours)
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      const level = h[1].length;
+      const cls =
+        level >= 3
+          ? "mt-5 mb-2 text-lg font-semibold text-indigo-300 first:mt-0"
+          : "mt-4 mb-1.5 text-base font-bold text-slate-100 first:mt-0";
+      out.push(
+        <h3 key={key++} className={cls}>
+          <InlineText text={h[2]} />
+        </h3>,
+      );
+      i += 1;
+      continue;
+    }
+    // Séparateur
+    if (/^---+$/.test(line) || /^\*\*\*+$/.test(line)) {
+      out.push(<hr key={key++} className="my-4 border-slate-700" />);
+      i += 1;
+      continue;
+    }
+    // Listes
+    if (/^[-*]\s+/.test(line)) {
+      i = pushList(false, i);
+      continue;
+    }
+    if (/^\d+[.)]\s+/.test(line)) {
+      i = pushList(true, i);
+      continue;
+    }
+    // Paragraphe : accumule les lignes simples suivantes
+    const buf: string[] = [line];
+    i += 1;
+    while (
+      i < lines.length &&
+      lines[i] &&
+      !/^(#{1,4})\s+/.test(lines[i]) &&
+      !/^[-*]\s+/.test(lines[i]) &&
+      !/^\d+[.)]\s+/.test(lines[i]) &&
+      !/^---+$/.test(lines[i])
+    ) {
+      buf.push(lines[i]);
+      i += 1;
+    }
+    out.push(
+      <p key={key++} className={paraClass()}>
+        <InlineText text={buf.join(" ")} />
+      </p>,
+    );
+  }
+
+  return <div className="space-y-0.5">{out}</div>;
 }
 
 function subjectChip(subject?: string) {
@@ -124,7 +180,9 @@ function ExerciseCard({ exercise, index }: { exercise: AILessonExercise; index: 
             {index + 1}
           </span>
           {exercise.title && (
-            <h3 className="font-semibold text-slate-100 leading-snug flex-1">{exercise.title}</h3>
+            <h3 className="font-semibold text-slate-100 leading-snug flex-1">
+              <InlineText text={exercise.title} />
+            </h3>
           )}
         </div>
 
@@ -151,7 +209,9 @@ function ExerciseCard({ exercise, index }: { exercise: AILessonExercise; index: 
                 <AlertTriangle className="size-4 text-rose-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-rose-300 mb-1">⚠️ Pièges fréquents :</p>
-                  <p className="text-sm text-slate-300">{exercise.common_pitfalls}</p>
+                  <p className="text-sm text-slate-300">
+                    <InlineText text={exercise.common_pitfalls} />
+                  </p>
                 </div>
               </div>
             )}
@@ -213,7 +273,7 @@ export function AILessonViewer({ lesson }: { lesson: AILessonData }) {
                 key={i}
                 className="text-xs px-3 py-1.5 rounded-full border border-slate-600/50 bg-slate-800/70 text-slate-200"
               >
-                {c}
+                {latexToUnicode(c)}
               </span>
             ))}
           </div>

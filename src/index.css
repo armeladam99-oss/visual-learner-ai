@@ -125,15 +125,3 @@
   }
 }
 
-/* KaTeX : laisser les grandes formules défiler sur mobile */
-.ai-katex .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.35rem 0;
-}
-.ai-katex .katex {
-  font-size: 1.05em;
-}
-.ai-katex .katex-display > .katex {
-  font-size: 1.15em;
-}
